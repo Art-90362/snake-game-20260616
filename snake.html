@@ -35,6 +35,21 @@
             color: #aaa;
         }
 
+        /* ============ МОНЕТЫ ============ */
+        .coins-display {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            color: #ffd700;
+            z-index: 100;
+        }
+        .coins-display span { font-weight: bold; }
+
         /* ============ МАГАЗИН ============ */
         .shop-btn {
             position: fixed;
@@ -68,8 +83,10 @@
             background: #2a2a2a;
             padding: 25px;
             border-radius: 15px;
-            min-width: 320px;
+            min-width: 360px;
             max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
             box-shadow: 0 0 40px rgba(0,0,0,0.8);
         }
         .shop-content h2 {
@@ -77,6 +94,34 @@
             margin-top: 0;
             text-align: center;
         }
+        
+        /* Табы */
+        .shop-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .shop-tab {
+            flex: 1;
+            padding: 10px;
+            background: #444;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .shop-tab.active {
+            background: #ff9800;
+        }
+
+        .your-coins {
+            text-align: center;
+            font-size: 20px;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
         .shop-item {
             background: #3a3a3a;
             padding: 12px 15px;
@@ -102,6 +147,7 @@
             cursor: not-allowed;
         }
         .shop-item-btn.bought { background: #2196F3; }
+        .shop-item-btn.equipped { background: #9c27b0; }
         .shop-close {
             background: #f44336;
             color: white;
@@ -113,12 +159,32 @@
             margin-top: 15px;
             width: 100%;
         }
-        .your-coins {
-            text-align: center;
-            font-size: 20px;
-            color: #ffd700;
-            margin-bottom: 15px;
+
+        /* Скины */
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
+        .skin-card {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        .skin-card:hover { background: #4a4a4a; }
+        .skin-card.owned { border-color: #4CAF50; }
+        .skin-card.equipped { border-color: #ff9800; background: #5a4a3a; }
+        .skin-preview {
+            width: 60px;
+            height: 20px;
+            margin: 0 auto 10px;
+            border-radius: 4px;
+        }
+        .skin-card h4 { margin: 0 0 5px 0; font-size: 14px; }
+        .skin-card p { margin: 0; font-size: 12px; color: #aaa; }
 
         /* ============ СТАРТОВЫЙ ЭКРАН ============ */
         .start-screen {
@@ -148,7 +214,7 @@
         /* ============ УРОВЕНЬ ============ */
         .level-display {
             position: fixed;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             background: rgba(0,0,0,0.7);
             padding: 8px 14px;
@@ -156,11 +222,9 @@
             font-size: 14px;
             z-index: 100;
         }
-        .speed-display {
-            color: #4CAF50;
-        }
+        .speed-display { color: #4CAF50; }
         
-        /* Модальное окно для политик и рекламы */
+        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -182,27 +246,11 @@
             max-height: 80vh;
             overflow-y: auto;
             text-align: center;
-            box-shadow: 0 0 30px rgba(0,0,0,0.7);
         }
         
-        .modal-content h2 {
-            color: #4CAF50;
-            margin-top: 0;
-        }
-        
-        .modal-content p, .modal-content li {
-            color: #ddd;
-            line-height: 1.6;
-        }
-        
-        .modal-content a {
-            color: #4CAF50;
-            text-decoration: none;
-        }
-        
-        .modal-content a:hover {
-            text-decoration: underline;
-        }
+        .modal-content h2 { color: #4CAF50; margin-top: 0; }
+        .modal-content p, .modal-content li { color: #ddd; line-height: 1.6; }
+        .modal-content a { color: #4CAF50; text-decoration: none; }
         
         .close-btn {
             background: #4CAF50;
@@ -215,11 +263,7 @@
             margin-top: 15px;
         }
         
-        .close-btn:hover {
-            background: #45a049;
-        }
-        
-        /* Рекламная секция в футере */
+        /* Footer */
         .footer {
             margin-top: 30px;
             padding: 20px;
@@ -228,55 +272,16 @@
             text-align: center;
             border-top: 1px solid #333;
         }
-        
         .ad-banner {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
         }
-        
-        .ad-banner p {
-            color: white;
-            margin: 0;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        
-        .footer-links a {
-            color: #aaa;
-            text-decoration: none;
-            font-size: 12px;
-        }
-        
-        .footer-links a:hover {
-            color: #4CAF50;
-        }
-        
-        .policy-link {
-            margin-top: 10px;
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .policy-link a {
-            color: #666;
-            text-decoration: none;
-        }
-        
-        .policy-link a:hover {
-            color: #4CAF50;
-        }
-        
-        /* Блок рекламы в контенте */
+        .ad-banner p { color: white; margin: 0; font-size: 16px; font-weight: bold; }
+        .footer-links { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .footer-links a { color: #aaa; text-decoration: none; font-size: 12px; }
+        .footer-links a:hover { color: #4CAF50; }
         .ad-space {
             width: 300px;
             height: 250px;
@@ -290,13 +295,7 @@
             margin: 20px auto;
             padding: 20px;
         }
-        
-        .ad-space span {
-            color: #888;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-        
+        .ad-space span { color: #888; font-size: 12px; margin-bottom: 10px; }
         .ad-space button {
             background: #4CAF50;
             color: white;
@@ -306,12 +305,8 @@
             cursor: pointer;
             font-size: 14px;
         }
-        
-        .ad-space button:hover {
-            background: #45a049;
-        }
 
-        /* Game Over overlay */
+        /* Game Over */
         .gameover-screen {
             display: none;
             position: fixed;
@@ -324,7 +319,8 @@
             z-index: 2500;
         }
         .gameover-screen h2 { font-size: 36px; color: #f44336; }
-        .gameover-screen p { font-size: 20px; color: #ffd700; }
+        .gameover-screen p { font-size: 20px; }
+        .gameover-screen .coins-earned { color: #ffd700; }
         .gameover-screen button {
             margin-top: 20px;
             background: #4CAF50;
@@ -338,10 +334,13 @@
     </style>
 </head>
 <body>
+    <!-- Монеты сверху -->
+    <div class="coins-display">🪙 Монеты: <span id="totalCoins">0</span></div>
+
     <!-- Стартовый экран -->
     <div id="startScreen" class="start-screen">
         <h1>🐍 Змейка</h1>
-        <p>Собирай еду, расти, покупай улучшения!</p>
+        <p>Собирай еду, расти, покупай скины!</p>
         <button class="start-btn" onclick="showStartScreen()">Играть</button>
     </div>
 
@@ -349,12 +348,8 @@
     <div id="gameoverScreen" class="gameover-screen">
         <h2>💀 Игра окончена!</h2>
         <p>Счёт: <span id="finalScore">0</span></p>
+        <p class="coins-earned">+<span id="coinsEarned">0</span> 🪙</p>
         <button onclick="restartGame()">Заново</button>
-    </div>
-
-    <!-- Информация сверху -->
-    <div class="level-display">
-        ⏱ Скорость: <span id="speedLvl" class="speed-display">1</span>
     </div>
 
     <!-- Кнопка магазина -->
@@ -371,59 +366,64 @@
         <button onclick="openModal('реклама')">Узнать больше</button>
     </div>
 
-    <!-- Магазин (модальное окно) -->
+    <!-- Магазин -->
     <div id="shopModal" class="shop-modal">
         <div class="shop-content">
             <h2>🛒 Магазин</h2>
-            <div class="your-coins">Ваши очки: <span id="shopCoins">0</span></div>
+            <div class="your-coins">Ваши монеты: <span id="shopCoins">0</span> 🪙</div>
             
-            <div class="shop-item">
-                <div class="shop-item-info">
-                    <h3>🔋 Замедление</h3>
-                    <p>Замедляет скорость на 10%</p>
-                </div>
-                <button id="btnSlow" class="shop-item-btn" onclick="buySlow()">50 🪙</button>
+            <div class="shop-tabs">
+                <button class="shop-tab active" onclick="switchTab('upgrades')">⬆️ Улучшения</button>
+                <button class="shop-tab" onclick="switchTab('skins')">🎨 Скины</button>
             </div>
 
-            <div class="shop-item">
-                <div class="shop-item-info">
-                    <h3>🛡 Щит (×3)</h3>
-                    <p>Защита от одной смерти</p>
+            <!-- Улучшения -->
+            <div id="tabUpgrades">
+                <div class="shop-item">
+                    <div class="shop-item-info">
+                        <h3>🔋 Замедление</h3>
+                        <p>Замедляет скорость на 15%</p>
+                    </div>
+                    <button id="btnSlow" class="shop-item-btn" onclick="buySlow()">50 🪙</button>
                 </div>
-                <button id="btnShield" class="shop-item-btn" onclick="buyShield()">100 🪙</button>
+
+                <div class="shop-item">
+                    <div class="shop-item-info">
+                        <h3>🛡 Щит (×3)</h3>
+                        <p>Защита от трёх смертей</p>
+                    </div>
+                    <button id="btnShield" class="shop-item-btn" onclick="buyShield()">100 🪙</button>
+                </div>
+
+                <div class="shop-item">
+                    <div class="shop-item-info">
+                        <h3>🍎 Двойная еда</h3>
+                        <p>Каждая еда даёт ×2 очка</p>
+                    </div>
+                    <button id="btnDouble" class="shop-item-btn" onclick="buyDouble()">150 🪙</button>
+                </div>
+
+                <div class="shop-item">
+                    <div class="shop-item-info">
+                        <h3>⏩ Супер рост</h3>
+                        <p>Змейка растёт при каждой еде</p>
+                    </div>
+                    <button id="btnGrowth" class="shop-item-btn" onclick="buyGrowth()">80 🪙</button>
+                </div>
             </div>
 
-            <div class="shop-item">
-                <div class="shop-item-info">
-                    <h3>🍎 Двойная еда</h3>
-                    <p>Каждая еда даёт ×2 очка</p>
+            <!-- Скины -->
+            <div id="tabSkins" style="display:none;">
+                <div class="skin-grid" id="skinGrid">
+                    <!-- Заполняется JS -->
                 </div>
-                <button id="btnDouble" class="shop-item-btn" onclick="buyDouble()">150 🪙</button>
-            </div>
-
-            <div class="shop-item">
-                <div class="shop-item-info">
-                    <h3>⏩ Ускорение роста</h3>
-                    <p>Змейка растёт быстрее</p>
-                </div>
-                <button id="btnGrowth" class="shop-item-btn" onclick="buyGrowth()">80 🪙</button>
             </div>
 
             <button class="shop-close" onclick="closeShop()">Закрыть</button>
         </div>
     </div>
 
-    <!-- Политика конфиденциальности (модальное окно) -->
-    <div id="privacyModal" class="modal">
-        <div class="modal-content">
-            <h2>Политика конфиденциальности</h2>
-            <p>Последнее обновление: 15 июня 2026 года</p>
-            <p>Добро пожаловать в игру "Змейка"!</p>
-            <button class="close-btn" onclick="closeModal('privacyModal')">Принять и закрыть</button>
-        </div>
-    </div>
-
-    <!-- Реклама (модальное окно) -->
+    <!-- Реклама -->
     <div id="adModal" class="modal">
         <div class="modal-content">
             <h2>Спецпредложение!</h2>
@@ -442,7 +442,6 @@
             <p>🎮 Попробуй наши новые игры на mevm.art.it-dl.ru!</p>
         </div>
         <div class="footer-links">
-            <a href="javascript:openModal('privacyModal')">Политика конфиденциальности</a>
             <a href="javascript:openModal('реклама')">Реклама</a>
             <a href="mailto:support@snake-game.ru">Поддержка</a>
         </div>
@@ -452,10 +451,33 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
-        const speedLvlElement = document.getElementById('speedLvl');
+        const totalCoinsElement = document.getElementById('totalCoins');
 
         const gridSize = 20;
         const tileCount = canvas.width / gridSize;
+
+        // ====== СОСТОЯНИЕ (localStorage) ======
+        let totalCoins = parseInt(localStorage.getItem('snake_coins') || '0');
+        let ownedSkins = JSON.parse(localStorage.getItem('snake_skins') || '["classic"]');
+        let equippedSkin = localStorage.getItem('snake_equipped') || 'classic';
+        let upgradeSlow = localStorage.getItem('snake_upgrade_slow') === 'true';
+        let upgradeShield = localStorage.getItem('snake_upgrade_shield') === 'true';
+        let upgradeDouble = localStorage.getItem('snake_upgrade_double') === 'true';
+        let upgradeGrowth = localStorage.getItem('snake_upgrade_growth') === 'true';
+
+        // ====== СКИНЫ ======
+        const SKINS = {
+            classic:    { name: 'Классик',    color: '#00ff00', price: 0,    headColor: '#00ff00' },
+            blue:       { name: 'Синяя',      color: '#2196F3', price: 50,   headColor: '#64b5f6' },
+            red:        { name: 'Красная',    color: '#f44336', price: 80,   headColor: '#ef5350' },
+            purple:     { name: 'Фиолетовая', color: '#9c27b0', price: 100,  headColor: '#ba68c8' },
+            fire:       { name: 'Огненная',   color: '#ff5722', price: 120,  headColor: '#ff8a65' },
+            ice:        { name: 'Ледяная',    color: '#00bcd4', price: 120,  headColor: '#4dd0e1' },
+            gold:       { name: 'Золотая',    color: '#ffd700', price: 200,  headColor: '#ffeb3b' },
+            rainbow:    { name: 'Радужная',   color: 'rainbow', price: 300,  headColor: 'rainbow' },
+            neon:       { name: 'Неон',       color: '#00ff88', price: 150,  headColor: '#69f0ae' },
+            dark:       { name: 'Тёмная',     color: '#424242', price: 80,   headColor: '#616161' }
+        };
 
         // ====== СОСТОЯНИЕ ИГРЫ ======
         let snake = [{x: 10, y: 10}];
@@ -464,106 +486,110 @@
         let dy = 0;
         let score = 0;
         let gameInterval = null;
-        let baseSpeed = 150; // базовая скорость (мс между кадрами)
+        let baseSpeed = 150;
         let currentSpeed = baseSpeed;
-        let gameStarted = false;
         let gameRunning = false;
 
-        // ====== ЭФФЕКТ ПОЯВЛЕНИЯ ЗМЕЙКИ ======
-        let snakeVisible = false; // змейка не видна сначала
-        let spawnTimer = 0;       // таймер появления
-        let spawnDelay = 60;       // ждём 60 кадров (около 1 сек при 60fps) перед появлением
-        let spawnEffect = 0;      // эффект мигания при появлении
+        let snakeVisible = false;
+        let spawnTimer = 0;
+        let spawnDelay = 60;
+        let spawnEffect = 0;
 
-        // ====== УЛУЧШЕНИЯ ИЗ МАГАЗИНА ======
-        let hasShield = 0;         // 0 = нет, >0 = кол-во щитов
-        let doubleFood = false;    // двойная еда
-        let growthBoost = false;   // ускоренный рост
+        let hasShield = 0;
+        let doubleFood = false;
+        let growthBoost = false;
 
-        // ====== АПГРЕЙДЫ (покупка навсегда) ======
-        let upgradeSlow = false;
-        let upgradeShield = false;
-        let upgradeDouble = false;
-        let upgradeGrowth = false;
+        // ====== ИНИЦИАЛИЗАЦИЯ ======
+        function init() {
+            totalCoinsElement.textContent = totalCoins;
+            renderSkinGrid();
+            drawGame();
+        }
 
         // ====== РИСОВАНИЕ ======
+        function getSkinColor(skinId, index, total) {
+            const skin = SKINS[skinId];
+            if (skinId === 'rainbow') {
+                const hue = (index * 30 + Date.now() / 10) % 360;
+                return `hsl(${hue}, 80%, 60%)`;
+            }
+            return skin ? skin.color : '#00ff00';
+        }
+
+        function getHeadColor(skinId) {
+            const skin = SKINS[skinId];
+            if (skinId === 'rainbow') {
+                return `hsl(${(Date.now() / 10) % 360}, 80%, 70%)`;
+            }
+            return skin ? skin.headColor : '#00ff00';
+        }
+
         function drawGame() {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Рисуем еду
+            // Еда
             ctx.fillStyle = doubleFood ? '#ff6600' : 'red';
             ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
 
-            // Рисуем змейку только если она видима
+            // Змейка
             if (snakeVisible) {
-                // Эффект щита
-                if (hasShield > 0) {
-                    ctx.fillStyle = '#00bfff';
-                } else {
-                    ctx.fillStyle = 'lime';
-                }
-                
                 for (let i = 0; i < snake.length; i++) {
                     let segment = snake[i];
+                    let isHead = i === 0;
                     
-                    // Градиент: голова ярче
-                    if (i === 0) {
-                        ctx.fillStyle = hasShield > 0 ? '#00ffff' : '#00ff00';
+                    // Цвет取决于 скина
+                    let color;
+                    if (equippedSkin === 'rainbow') {
+                        color = getSkinColor('rainbow', i, snake.length);
                     } else {
-                        // Хвост с градиентом
-                        let alpha = 1 - (i / snake.length) * 0.5;
-                        ctx.globalAlpha = alpha;
-                        ctx.fillStyle = hasShield > 0 ? '#0099cc' : 'lime';
+                        color = isHead ? getHeadColor(equippedSkin) : SKINS[equippedSkin].color;
                     }
                     
+                    if (!isHead) {
+                        ctx.globalAlpha = 1 - (i / snake.length) * 0.4;
+                    }
+                    
+                    ctx.fillStyle = color;
                     ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
                 }
                 ctx.globalAlpha = 1;
             }
         }
 
-        // ====== ЛОГИКА ИГРЫ (отдельный интервал) ======
+        // ====== ЛОГИКА ИГРЫ ======
         function gameLoop() {
             if (!gameRunning) return;
 
-            // Фаза появления
             if (!snakeVisible) {
                 spawnTimer++;
-                // Мигаем полем пока змейка появляется
                 if (spawnTimer % 10 < 5) {
                     ctx.fillStyle = '#111';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
-                
                 if (spawnTimer >= spawnDelay) {
                     snakeVisible = true;
-                    spawnEffect = 30; // 30 кадров эффекта после появления
+                    spawnEffect = 30;
                 }
                 return;
             }
 
-            // Эффект появления
             if (spawnEffect > 0) {
                 spawnEffect--;
-                // Пульсирующий эффект
                 if (spawnEffect % 4 < 2) {
                     ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
 
-            // Движение змейки
             if (dx !== 0 || dy !== 0) {
                 const head = {x: snake[0].x + dx, y: snake[0].y + dy};
                 
-                // Проверка столкновения со стенами
                 if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
                     handleDeath();
                     return;
                 }
                 
-                // Проверка столкновения с хвостом
                 for (let i = 0; i < snake.length; i++) {
                     if (head.x === snake[i].x && head.y === snake[i].y) {
                         handleDeath();
@@ -573,14 +599,11 @@
                 
                 snake.unshift(head);
 
-                // Проверка еды
                 if (head.x === food.x && head.y === food.y) {
                     let points = doubleFood ? 2 : 1;
                     score += points;
                     scoreElement.textContent = score;
                     
-                    // Рост: обычно змейка НЕ растёт когда ест
-                    // но если есть улучшение роста - растёт
                     if (!growthBoost) {
                         snake.pop();
                     }
@@ -597,9 +620,7 @@
 
         function handleDeath() {
             if (hasShield > 0) {
-                // Щит спас!
                 hasShield--;
-                // Респавн змейки
                 snake = [{x: 10, y: 10}];
                 dx = 0;
                 dy = 0;
@@ -609,7 +630,11 @@
                 return;
             }
             
-            // Смерть - показываем Game Over
+            // Зачисляем монеты
+            totalCoins += score;
+            localStorage.setItem('snake_coins', totalCoins);
+            totalCoinsElement.textContent = totalCoins;
+            
             gameRunning = false;
             if (gameInterval) {
                 clearInterval(gameInterval);
@@ -617,6 +642,7 @@
             }
             
             document.getElementById('finalScore').textContent = score;
+            document.getElementById('coinsEarned').textContent = score;
             document.getElementById('gameoverScreen').style.display = 'flex';
         }
 
@@ -625,7 +651,6 @@
                 x: Math.floor(Math.random() * tileCount),
                 y: Math.floor(Math.random() * tileCount)
             };
-            
             for (let segment of snake) {
                 if (food.x === segment.x && food.y === segment.y) {
                     placeFood();
@@ -635,65 +660,33 @@
         }
 
         function updateSpeed() {
-            // Скорость растёт ПОСТЕПЕННО с количеством очков
-            // Базовое: 150мс, минимум: 50мс
-            // Каждые 5 очков уменьшаем на 3мс
             let newSpeed = baseSpeed - Math.floor(score / 5) * 3;
-            
-            // Если куплено замедление
-            if (upgradeSlow) {
-                newSpeed = newSpeed * 1.2;
-            }
-            
-            // Минимум 50мс, максимум baseSpeed
+            if (upgradeSlow) newSpeed *= 1.15;
             newSpeed = Math.max(50, Math.min(baseSpeed, newSpeed));
             
             if (newSpeed !== currentSpeed) {
                 currentSpeed = newSpeed;
-                // Перезапускаем интервал с новой скоростью
                 if (gameInterval) {
                     clearInterval(gameInterval);
                     gameInterval = setInterval(gameLoop, currentSpeed);
                 }
             }
-            
-            // Уровень скорости для отображения (1-10)
-            let lvl = Math.floor((baseSpeed - currentSpeed) / 10) + 1;
-            lvl = Math.max(1, Math.min(10, lvl));
-            speedLvlElement.textContent = lvl;
         }
 
         // ====== УПРАВЛЕНИЕ ======
         document.addEventListener('keydown', (e) => {
             if (!gameRunning) return;
-            
             switch (e.key) {
-                case 'ArrowUp':
-                case 'w':
-                case 'W':
-                case 'ц':
-                case 'Ц':
+                case 'ArrowUp': case 'w': case 'W': case 'ц': case 'Ц':
                     if (dy === 0) { dx = 0; dy = -1; }
                     break;
-                case 'ArrowDown':
-                case 's':
-                case 'S':
-                case 'ы':
-                case 'Ы':
+                case 'ArrowDown': case 's': case 'S': case 'ы': case 'Ы':
                     if (dy === 0) { dx = 0; dy = 1; }
                     break;
-                case 'ArrowLeft':
-                case 'a':
-                case 'A':
-                case 'ф':
-                case 'Ф':
+                case 'ArrowLeft': case 'a': case 'A': case 'ф': case 'Ф':
                     if (dx === 0) { dx = -1; dy = 0; }
                     break;
-                case 'ArrowRight':
-                case 'd':
-                case 'D':
-                case 'в':
-                case 'В':
+                case 'ArrowRight': case 'd': case 'D': case 'в': case 'В':
                     if (dx === 0) { dx = 1; dy = 0; }
                     break;
             }
@@ -701,15 +694,21 @@
 
         // ====== МАГАЗИН ======
         function openShop() {
-            document.getElementById('shopCoins').textContent = score;
-            document.getElementById('shopModal').style.display = 'flex';
-            
-            // Обновляем кнопки
+            document.getElementById('shopCoins').textContent = totalCoins;
             updateShopButtons();
+            renderSkinGrid();
+            document.getElementById('shopModal').style.display = 'flex';
         }
 
         function closeShop() {
             document.getElementById('shopModal').style.display = 'none';
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabUpgrades').style.display = tab === 'upgrades' ? 'block' : 'none';
+            document.getElementById('tabSkins').style.display = tab === 'skins' ? 'block' : 'none';
+            document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
         }
 
         function updateShopButtons() {
@@ -718,81 +717,136 @@
             const btnDouble = document.getElementById('btnDouble');
             const btnGrowth = document.getElementById('btnGrowth');
 
-            // Замедление - 50
             if (upgradeSlow) {
                 btnSlow.textContent = '✅ Куплено';
                 btnSlow.classList.add('bought');
                 btnSlow.disabled = true;
             } else {
-                btnSlow.disabled = score < 50;
+                btnSlow.disabled = totalCoins < 50;
             }
 
-            // Щит - 100
             if (upgradeShield) {
                 btnShield.textContent = '✅ Куплено';
                 btnShield.classList.add('bought');
                 btnShield.disabled = true;
             } else {
-                btnShield.disabled = score < 100;
+                btnShield.disabled = totalCoins < 100;
             }
 
-            // Двойная еда - 150
             if (upgradeDouble) {
                 btnDouble.textContent = '✅ Куплено';
                 btnDouble.classList.add('bought');
                 btnDouble.disabled = true;
             } else {
-                btnDouble.disabled = score < 150;
+                btnDouble.disabled = totalCoins < 150;
             }
 
-            // Ускорение роста - 80
             if (upgradeGrowth) {
                 btnGrowth.textContent = '✅ Куплено';
                 btnGrowth.classList.add('bought');
                 btnGrowth.disabled = true;
             } else {
-                btnGrowth.disabled = score < 80;
+                btnGrowth.disabled = totalCoins < 80;
             }
         }
 
         function buySlow() {
-            if (score >= 50 && !upgradeSlow) {
-                score -= 50;
+            if (totalCoins >= 50 && !upgradeSlow) {
+                totalCoins -= 50;
                 upgradeSlow = true;
-                baseSpeed = 180; // чуть медленнее базовая
-                scoreElement.textContent = score;
+                localStorage.setItem('snake_upgrade_slow', 'true');
+                localStorage.setItem('snake_coins', totalCoins);
+                totalCoinsElement.textContent = totalCoins;
+                document.getElementById('shopCoins').textContent = totalCoins;
+                baseSpeed = 170;
                 updateShopButtons();
-                updateSpeed();
             }
         }
 
         function buyShield() {
-            if (score >= 100 && !upgradeShield) {
-                score -= 100;
+            if (totalCoins >= 100 && !upgradeShield) {
+                totalCoins -= 100;
                 upgradeShield = true;
-                hasShield = 3; // даём 3 щита
-                scoreElement.textContent = score;
+                localStorage.setItem('snake_upgrade_shield', 'true');
+                localStorage.setItem('snake_coins', totalCoins);
+                totalCoinsElement.textContent = totalCoins;
+                document.getElementById('shopCoins').textContent = totalCoins;
+                hasShield = 3;
                 updateShopButtons();
             }
         }
 
         function buyDouble() {
-            if (score >= 150 && !upgradeDouble) {
-                score -= 150;
+            if (totalCoins >= 150 && !upgradeDouble) {
+                totalCoins -= 150;
                 upgradeDouble = true;
+                localStorage.setItem('snake_upgrade_double', 'true');
+                localStorage.setItem('snake_coins', totalCoins);
+                totalCoinsElement.textContent = totalCoins;
+                document.getElementById('shopCoins').textContent = totalCoins;
                 doubleFood = true;
-                scoreElement.textContent = score;
                 updateShopButtons();
             }
         }
 
         function buyGrowth() {
-            if (score >= 80 && !upgradeGrowth) {
-                score -= 80;
+            if (totalCoins >= 80 && !upgradeGrowth) {
+                totalCoins -= 80;
                 upgradeGrowth = true;
+                localStorage.setItem('snake_upgrade_growth', 'true');
+                localStorage.setItem('snake_coins', totalCoins);
+                totalCoinsElement.textContent = totalCoins;
+                document.getElementById('shopCoins').textContent = totalCoins;
                 growthBoost = true;
-                scoreElement.textContent = score;
                 updateShopButtons();
+            }
+        }
+
+        // ====== СКИНЫ ======
+        function renderSkinGrid() {
+            const grid = document.getElementById('skinGrid');
+            grid.innerHTML = '';
+            
+            for (let [id, skin] of Object.entries(SKINS)) {
+                let owned = ownedSkins.includes(id);
+                let equipped = equippedSkin === id;
+                
+                let previewColor = skin.color;
+                if (id === 'rainbow') previewColor = 'linear-gradient(90deg, red, orange, yellow, green, blue, purple)';
+                
+                let card = document.createElement('div');
+                card.className = 'skin-card' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '');
+                card.onclick = () => owned ? equipSkin(id) : buySkin(id);
+                
+                card.innerHTML = `
+                    <div class="skin-preview" style="background: ${previewColor}"></div>
+                    <h4>${skin.name}</h4>
+                    <p>${equipped ? '✓ Экипирован' : owned ? 'Экипировать' : skin.price + ' 🪙'}</p>
+                `;
+                
+                grid.appendChild(card);
+            }
+        }
+
+        function buySkin(id) {
+            const skin = SKINS[id];
+            if (totalCoins >= skin.price && !ownedSkins.includes(id)) {
+                totalCoins -= skin.price;
+                ownedSkins.push(id);
+                localStorage.setItem('snake_coins', totalCoins);
+                localStorage.setItem('snake_skins', JSON.stringify(ownedSkins));
+                totalCoinsElement.textContent = totalCoins;
+                document.getElementById('shopCoins').textContent = totalCoins;
+                renderSkinGrid();
+                updateShopButtons();
+            }
+        }
+
+        function equipSkin(id) {
+            if (ownedSkins.includes(id)) {
+                equippedSkin = id;
+                localStorage.setItem('snake_equipped', id);
+                renderSkinGrid();
             }
         }
 
@@ -821,7 +875,6 @@
         }
 
         function startGame() {
-            // Сброс всего
             snake = [{x: 10, y: 10}];
             dx = 0;
             dy = 0;
@@ -831,12 +884,10 @@
             spawnTimer = 0;
             spawnEffect = 0;
             
-            // Сброс улучшений (кроме купленных)
-            if (!upgradeShield) hasShield = 0;
-            if (!upgradeDouble) doubleFood = false;
-            if (!upgradeGrowth) growthBoost = false;
-            
-            currentSpeed = upgradeSlow ? 180 : 150;
+            hasShield = upgradeShield ? 3 : 0;
+            doubleFood = upgradeDouble;
+            growthBoost = upgradeGrowth;
+            currentSpeed = baseSpeed;
             
             placeFood();
             gameRunning = true;
@@ -850,8 +901,8 @@
             startGame();
         }
 
-        // Первичный запуск - показать стартовый экран
-        drawGame(); // пустой экран
+        // Запуск
+        init();
     </script>
 </body>
 </html>
