@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Змейка</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        
+        canvas {
+            border: 2px solid #444;
+            background: #000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .score {
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        
+        .controls {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        /* Модальное окно для политик и рекламы */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+        }
+        
+        .modal-content h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        
+        .modal-content p, .modal-content li {
+            color: #ddd;
+            line-height: 1.6;
+        }
+        
+        .modal-content a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        
+        .modal-content a:hover {
+            text-decoration: underline;
+        }
+        
+        .close-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        
+        .close-btn:hover {
+            background: #45a049;
+        }
+        
+        /* Рекламная секция в футере */
+        .footer {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            width: 100%;
+            text-align: center;
+            border-top: 1px solid #333;
+        }
+        
+        .ad-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .ad-banner p {
+            color: white;
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .footer-links a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .footer-links a:hover {
+            color: #4CAF50;
+        }
+        
+        /* Ссылка на политику конфиденциальности в футере */
+        .policy-link {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .policy-link a {
+            color: #666;
+            text-decoration: none;
+        }
+        
+        .policy-link a:hover {
+            color: #4CAF50;
+        }
+        
+        /* Блок рекламы в контенте */
+        .ad-space {
+            width: 300px;
+            height: 250px;
+            background: linear-gradient(to bottom, #1a1a1a, #2a2a2a);
+            border: 1px dashed #555;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+        .ad-space span {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .ad-space button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .ad-space button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐍 Змейка</h1>
+    <canvas id="game" width="400" height="400"></canvas>
+    <div class="score">Счёт: <span id="score">0</span></div>
+    <div class="controls">Управление: стрелки или WASD</div>
+    
+    <!-- Рекламный блок -->
+    <div class="ad-space">
+        <span>РЕКЛАМА</span>
+        <button onclick="openModal('реклама')">Узнать больше</button>
+    </div>
+
+    <!-- Политика конфиденциальности (модальное окно) -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <h2>Политика конфиденциальности</h2>
+            <p>Последнее обновление: 15 июня 2026 года</p>
+            
+            <p>Добро пожаловать в игру "Змейка"! Мы ценим вашу конфиденциальность и обязуемся защищать ваши персональные данные.</p>
+            
+            <h3>1. Какие данные мы собираем</h3>
+            <p>Мы собираем только необходимые данные для работы игры:</p>
+            <ul>
+                <li>Счёт игры (сохраняется в памяти браузера)</li>
+                <li>Техническая информация (IP-адрес, тип браузера) для обеспечения безопасности</li>
+            </ul>
+            
+            <h3>2. Как мы используем ваши данные</h3>
+            <p>Мы используем собранные данные исключительно для:</p>
+            <ul>
+                <li>Предоставления функциональности игры</li>
+                <li>Улучшения игрового опыта</li>
+                <li>Обеспечения безопасности и предотвращения мошенничества</li>
+            </ul>
+            
+            <h3>3. Реклама и сторонние сервисы</h3>
+            <p>Игра может содержать рекламу от сторонних партнеров. Мы не продаем и не передаем ваши персональные данные третьим лицам без вашего согласия.</p>
+            
+            <h3>4. Права пользователя</h3>
+            <p>Вы имеете право:</p>
+            <ul>
+                <li>Отказаться от получения рекламы</li>
+                <li>Удалить свои данные (сбросить счёт игры)</li>
+                <li>Получить информацию о том, какие данные мы храним</li>
+            </ul>
+            
+            <h3>5. Безопасность данных</h3>
+            <p>Мы принимаем меры для защиты ваших данных от несанкционированного доступа, использования или раскрытия.</p>
+            
+            <h3>6. Изменения в политике</h3>
+            <p>Мы можем обновлять эту политику конфиденциальности. Новая версия вступит в силу с момента публикации.</p>
+            
+            <h3>7. Связь с нами</h3>
+            <p>Если у вас есть вопросы по этой политике, свяжитесь с нами:</p>
+            <p>Электронная почта: <a href="mailto:privacy@snake-game.ru">privacy@snake-game.ru</a></p>
+            
+            <button class="close-btn" onclick="closeModal('privacyModal')">Принять и закрыть</button>
+        </div>
+    </div>
+
+    <!-- Реклама (модальное окно) -->
+    <div id="adModal" class="modal">
+        <div class="modal-content">
+            <h2>Спецпредложение!</h2>
+            <p>Спасибо, что играете в нашу игру! Мы поддерживаем свободный доступ к развлечениям за счёт рекламы.</p>
+            
+            <p><strong>Сегодня в рекламном блоке:</strong></p>
+            
+            <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="color: #4CAF50; margin: 0 0 10px 0;">🎮 Играй и выигрывай!</h3>
+                <p>Попробуй новую игру "Космический Защитник"!</p>
+                <p style="color: #888; font-size: 12px;">Реклама. Это рекламное предложение.</p>
+            </div>
+            
+            <p>Ваша поддержка позволяет нам создавать новые игры и улучшать существующие!</p>
+            
+            <button class="close-btn" onclick="closeModal('adModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Политика конфиденциальности (ссылка в футере) -->
+    <div class="footer">
+        <div class="ad-banner">
+            <p>🎮 Попробуй наши новые игры на mevm.art.it-dl.ru!</p>
+        </div>
+        
+        <div class="footer-links">
+            <a href="javascript:openModal('privacyModal')" onclick="openModal('privacyModal')">Политика конфиденциальности</a>
+            <a href="javascript:openModal('реклама')" onclick="openModal('реклама')">Реклама на сайте</a>
+            <a href="mailto:support@snake-game.ru">Поддержка</a>
+            <a href="https://github.com" target="_blank">GitHub</a>
+        </div>
+        
+        <div class="policy-link">
+            <a href="javascript:openModal('privacyModal')" onclick="openModal('privacyModal')">Политика конфиденциальности</a> | 
+            © 2026 Змейка. Все права защищены.
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let gameInterval;
+
+        function drawGame() {
+            // Очистка экрана
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Движение змейки
+            if (dx !== 0 || dy !== 0) {
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+                
+                // Проверка столкновения со стенами
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    resetGame();
+                    return;
+                }
+                
+                // Проверка столкновения с хвостом
+                for (let segment of snake) {
+                    if (head.x === segment.x && head.y === segment.y) {
+                        resetGame();
+                        return;
+                    }
+                }
+                
+                snake.unshift(head);
+            }
+
+            // Проверка еды
+            if (snake[0].x === food.x && snake[0].y === food.y) {
+                score++;
+                scoreElement.textContent = score;
+                placeFood();
+            } else {
+                snake.pop();
+            }
+
+            // Рисуем змейку
+            ctx.fillStyle = 'lime';
+            for (let segment of snake) {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            }
+
+            // Рисуем еду
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+        }
+
+        function placeFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            
+            // Проверка, чтобы еда не появилась внутри змейки
+            for (let segment of snake) {
+                if (food.x === segment.x && food.y === segment.y) {
+                    placeFood();
+                    break;
+                }
+            }
+        }
+
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            scoreElement.textContent = score;
+            placeFood();
+        }
+
+        function startGame() {
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(drawGame, 100);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                case 'ц':
+                case 'Ц':
+                    if (dy === 0) { dx = 0; dy = -1; }
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                case 'ы':
+                case 'Ы':
+                    if (dy === 0) { dx = 0; dy = 1; }
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                case 'ф':
+                case 'Ф':
+                    if (dx === 0) { dx = -1; dy = 0; }
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                case 'в':
+                case 'В':
+                    if (dx === 0) { dx = 1; dy = 0; }
+                    break;
+            }
+        });
+
+        // Функции для модальных окон
+        function openModal(modalName) {
+            let modalId;
+            if (modalName === 'реклама') {
+                modalId = 'adModal';
+            } else {
+                modalId = modalName + 'Modal';
+            }
+            
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = "none";
+            }
+        }
+
+        // Запуск игры
+        startGame();
+    </script>
+</body>
+</html>
