@@ -297,10 +297,11 @@
 
         let snake = [{x: 10, y: 10}];
         let food = {x: 15, y: 15};
-        let dx = 0;
+        let dx = 1; // Начинаем движение вправо
         let dy = 0;
         let score = 0;
         let gameInterval;
+        let gameStarted = false;
 
         function drawGame() {
             // Очистка экрана
@@ -441,6 +442,11 @@
 
         // Запуск игры
         startGame();
+        
+        // Авто-запуск движения сразу при загрузке
+        setTimeout(() => {
+            gameStarted = true;
+        }, 100);
     </script>
 </body>
 </html>
