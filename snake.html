@@ -162,6 +162,12 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 .playlist-controls button{background:#2196F3;border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer}
 .playlist-empty{color:#666;font-size:14px;margin:20px 0}
 .playlist-close{background:linear-gradient(135deg,#f44336,#d32f2f);color:#fff;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:16px;margin-top:15px;width:100%}
+.modal-btn{background:#2196F3;color:#fff;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:16px;margin-top:10px;width:100%;font-weight:bold;transition:transform .2s}
+.modal-btn:hover{transform:scale(1.02)}
+.modal-btn.green{background:#4CAF50}
+.modal-btn.orange{background:#ff9800}
+.modal-btn.blue{background:#2196F3}
+.modal-btn.red{background:#f44336}
 </style>
 </head>
 <body>
@@ -321,8 +327,8 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
     </div>
     <div class="settings-sublabel" id="controlsHint">ПК: WASD / Стрелки</div>
     <button class="settings-close" onclick="closeSettings()">OK</button>
-    <button class="settings-close" style="background:#2196F3;margin-top:10px" onclick="openLeaderboard();closeSettings();">🏆 Топ 20</button>
-    <button class="settings-close" style="background:#4CAF50;margin-top:10px" onclick="openPlaylist();closeSettings();">🎵 Плейлист</button>
+    <button class="modal-btn blue" onclick="openLeaderboard();closeSettings();">🏆 Топ 20</button>
+    <button class="modal-btn green" onclick="openPlaylist();closeSettings();">🎵 Плейлист</button>
   </div>
 </div>
 
@@ -500,24 +506,29 @@ _audioEl.addEventListener('ended',function(){
 var audioCtx=null;
 var bassGain=null;
 var masterGain=null;
+var useWebAudio=false;
+var savedVol=50;
 
 function initAudio(){
   if(audioCtx)return;
   try{
     audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     masterGain=audioCtx.createGain();
-    masterGain.gain.value=0.4;
-    // BASS BOOST - lowshelf filter
+    masterGain.gain.value=savedVol/100;
     bassGain=audioCtx.createBiquadFilter();
     bassGain.type='lowshelf';
     bassGain.frequency.value=200;
-    bassGain.gain.value=12; // +12dB bass
-    // Connect chain: source -> bass -> master -> destination
+    bassGain.gain.value=6;
     var source=audioCtx.createMediaElementSource(document.getElementById('bgMusic'));
     source.connect(bassGain);
     bassGain.connect(masterGain);
     masterGain.connect(audioCtx.destination);
-  }catch(e){console.log('Web Audio not supported:',e);}
+    useWebAudio=true;
+  }catch(e){
+    console.log('Web Audio failed, using HTML5 audio');
+    bgMusic.volume=savedVol/100;
+    useWebAudio=false;
+  }
 }
 
 function resumeAudio(){
@@ -602,13 +613,19 @@ var hasShield=0,doubleFood=false,growthBoost=false;
 
 // ===== INIT =====
 function init(){
-  bgMusic.volume=0.0; // use Web Audio instead
+  savedVol=parseInt(localStorage.getItem('snk_vol')||'50');
+  bgMusic.volume=savedVol/100;
+  bgMusic.loop=true;
   updateMenuStats();
   startMenuSnake();
   updateMusicBtn();
   updateLoginUI();
   applyI18();
-  // Audio inits on first user interaction
+  if(_d.music){
+    initAudio();
+    resumeAudio();
+    bgMusic.play().then(function(){}).catch(function(e){console.log('Autoplay blocked:',e.message)});
+  }
   document.addEventListener('click',function(){initAudio();resumeAudio();},{once:true});
   document.addEventListener('touchstart',function(){initAudio();resumeAudio();},{once:true});
 }
@@ -731,8 +748,9 @@ function startActualGame(){
   gameInterval=setInterval(gameLoop,currentSpeed);
   if(_d.music){
     bgMusic.src='snake_theme.mp3';
+    bgMusic.loop=true;
     bgMusic.load();
-    bgMusic.play().catch(function(){});
+    bgMusic.play().then(function(){}).catch(function(e){console.log('Play error:',e.message)});
   }
 }
 
@@ -944,7 +962,12 @@ function toggleSfx(){sfxEnabled=!sfxEnabled;localStorage.setItem('snk_sfx',sfxEn
 function toggleMusic2(){toggleMusic();updateSettingsUI();}
 function toggleLang(){setLang(I18.lang==='ru'?'en':'ru');updateSettingsUI();}
 function setMusicVol(v){
-  if(masterGain)masterGain.gain.value=v/100;
+  var vol=v/100;
+  if(useWebAudio&&masterGain){
+    masterGain.gain.value=vol;
+  } else {
+    bgMusic.volume=vol;
+  }
   localStorage.setItem('snk_vol',v);
 }
 
@@ -1150,11 +1173,13 @@ function toggleMusic(){
   initAudio();
   resumeAudio();
   if(_d.music){
-    bgMusic.play().catch(function(){});
-    if(masterGain)masterGain.gain.value=0.4;
+    bgMusic.play().then(function(){}).catch(function(e){console.log('Play error:',e.message)});
+    if(useWebAudio&&masterGain)masterGain.gain.value=savedVol/100;
+    else bgMusic.volume=savedVol/100;
   } else {
     bgMusic.pause();
-    if(masterGain)masterGain.gain.value=0;
+    if(useWebAudio&&masterGain)masterGain.gain.value=0;
+    else bgMusic.volume=0;
   }
 }
 function updateMusicBtn(){
