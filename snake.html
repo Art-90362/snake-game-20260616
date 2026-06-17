@@ -6,7 +6,13 @@
 <title>🐍 Змейка</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;overflow:hidden}
+body{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+.ad-banner{width:100%;background:rgba(0,0,0,.6);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;min-height:60px;overflow:hidden;flex-shrink:0}
+.ad-banner.bottom{border-top:1px solid rgba(255,255,255,.1);border-bottom:none}
+.ad-banner-inner{width:100%;max-width:728px;min-height:60px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;margin:0 auto}
+.ad-placeholder{color:#555;font-size:11px;text-align:center;padding:10px}
+.ad-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);border:none;color:#888;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px}
+.ad-close:hover{background:rgba(0,0,0,.8);color:#fff}
 .menu-container{display:flex;width:100vw;height:100vh}
 .menu-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px}
 .menu-right{width:320px;background:rgba(0,0,0,.5);padding:40px 30px;display:flex;flex-direction:column;justify-content:center;gap:15px;border-left:2px solid rgba(0,255,0,.2)}
@@ -93,6 +99,14 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 <body>
 
 <!-- MENU SCREEN -->
+<!-- TOP AD BANNER -->
+<div class="ad-banner" id="topAdBanner">
+  <div class="ad-banner-inner" id="topAdInner">
+    <div class="ad-placeholder">📢 Реклама — установи свой код здесь</div>
+  </div>
+  <button class="ad-close" onclick="closeAd('top')">✕</button>
+</div>
+
 <div id="menuScreen" class="menu-container">
   <div class="menu-left">
     <div class="menu-title">🐍 Змейка</div>
@@ -140,6 +154,14 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 </div>
 
 <!-- LOADING OVERLAY -->
+<!-- BOTTOM AD BANNER -->
+<div class="ad-banner bottom" id="bottomAdBanner">
+  <button class="ad-close" onclick="closeAd('bottom')">✕</button>
+  <div class="ad-banner-inner" id="bottomAdInner">
+    <div class="ad-placeholder">📢 Реклама — установи свой код здесь</div>
+  </div>
+</div>
+
 <div id="loadingOverlay" style="display:none">
   <div class="loading-box">
     <div class="loading-title">🐍 Змейка</div>
@@ -205,10 +227,38 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 <!-- MUSIC TOGGLE -->
 <button id="musicToggleBtn" onclick="toggleMusic()">🔊</button>
 
-<!-- AUDIO -->
-<audio id="bgMusic" loop preload="auto"><source src="snake_theme.mp3" type="audio/mpeg"></audio>
+<!-- AUDIO with Web Audio API (bass boost) -->
+<audio id="bgMusic" loop preload="auto" crossorigin="anonymous"><source src="snake_theme.mp3" type="audio/mpeg"></audio>
 
 <script>
+// ===== WEB AUDIO (BASS BOOST) =====
+var audioCtx=null;
+var bassGain=null;
+var masterGain=null;
+
+function initAudio(){
+  if(audioCtx)return;
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.gain.value=0.4;
+    // BASS BOOST - lowshelf filter
+    bassGain=audioCtx.createBiquadFilter();
+    bassGain.type='lowshelf';
+    bassGain.frequency.value=200;
+    bassGain.gain.value=12; // +12dB bass
+    // Connect chain: source -> bass -> master -> destination
+    var source=audioCtx.createMediaElementSource(document.getElementById('bgMusic'));
+    source.connect(bassGain);
+    bassGain.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+  }catch(e){console.log('Web Audio not supported:',e);}
+}
+
+function resumeAudio(){
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+}
+
 // ===== DATA =====
 var _d={
   coins:parseInt(localStorage.getItem('snk_c')||'0'),
@@ -244,13 +294,13 @@ var hasShield=0,doubleFood=false,growthBoost=false;
 
 // ===== INIT =====
 function init(){
-  bgMusic.volume=0.3;
+  bgMusic.volume=0.0; // use Web Audio instead
   updateMenuStats();
   startMenuSnake();
-  if(_d.music){
-    bgMusic.play().catch(function(){});
-    updateMusicBtn();
-  }
+  updateMusicBtn();
+  // Audio inits on first user interaction
+  document.addEventListener('click',function(){initAudio();resumeAudio();},{once:true});
+  document.addEventListener('touchstart',function(){initAudio();resumeAudio();},{once:true});
 }
 
 function updateMenuStats(){
@@ -473,7 +523,7 @@ function checkMusicSwitch(){
     currentTrack=newTrack;
     if(_d.music){
       bgMusic.pause();
-      bgMusic.src='snake_'+track+'.mp3';
+      bgMusic.src='snake_'+newTrack+'.mp3';
       bgMusic.load();
       bgMusic.play().catch(function(){});
     }
@@ -561,7 +611,15 @@ function toggleMusic(){
   _d.music=!_d.music;
   localStorage.setItem('snk_m',_d.music?'1':'0');
   updateMusicBtn();
-  if(_d.music){bgMusic.play().catch(function(){});} else {bgMusic.pause();}
+  initAudio();
+  resumeAudio();
+  if(_d.music){
+    bgMusic.play().catch(function(){});
+    if(masterGain)masterGain.gain.value=0.4;
+  } else {
+    bgMusic.pause();
+    if(masterGain)masterGain.gain.value=0;
+  }
 }
 function updateMusicBtn(){
   var icon=document.getElementById('musicIconMenu');
@@ -583,6 +641,12 @@ document.addEventListener('keydown',function(e){
     case'ArrowRight':case'd':case'D':case'в':case'В':if(dx===0){dx=1;dy=0}break;
   }
 });
+
+// ===== AD CLOSE =====
+function closeAd(pos){
+  var banner=document.getElementById(pos==='top'?'topAdBanner':'bottomAdBanner');
+  if(banner){banner.style.display='none';}
+}
 
 // ===== START =====
 init();
