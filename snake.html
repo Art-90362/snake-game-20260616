@@ -117,6 +117,25 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 .authors-content p{color:#ccc;margin:10px 0;font-size:16px}
 .authors-content .version{color:#666;font-size:12px;margin-top:20px}
 .authors-close{background:linear-gradient(135deg,#f44336,#d32f2f);color:#fff;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:16px;margin-top:20px}
+/* SETTINGS MODAL */
+#settingsModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);justify-content:center;align-items:center;z-index:3000}
+.settings-content{background:linear-gradient(135deg,#2a2a4a,#1a1a3a);padding:30px;border-radius:20px;text-align:center;border:2px solid rgba(0,255,0,.3);min-width:340px;max-width:90%}
+.settings-content h2{color:#00ff00;margin:0 0 20px 0;font-size:26px}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{color:#fff;font-size:16px}
+.settings-toggle{width:60px;height:30px;border-radius:15px;cursor:pointer;border:none;transition:background .2s;font-weight:bold;font-size:12px}
+.settings-toggle.on{background:#4CAF50;color:#fff}
+.settings-toggle.off{background:#555;color:#888}
+.settings-group{display:flex;flex-direction:column;gap:10px;margin:15px 0}
+.settings-sublabel{color:#888;font-size:13px;text-align:left}
+.lang-btns{display:flex;gap:10px}
+.lang-btn{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:16px;font-weight:bold;transition:all .2s}
+.lang-btn.ru{background:#555;color:#fff}
+.lang-btn.en{background:#555;color:#fff}
+.lang-btn.active.ru{background:#f44336}
+.lang-btn.active.en{background:#1976D2}
+.settings-close{background:linear-gradient(135deg,#f44336,#d32f2f);color:#fff;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:16px;margin-top:20px;width:100%}
 </style>
 </head>
 <body>
@@ -132,8 +151,8 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 
 <div id="menuScreen" class="menu-container">
   <div class="menu-left">
-    <div class="menu-title">🐍 Змейка</div>
-    <div class="menu-subtitle">Классическая игра с модами и скинами</div>
+    <div class="menu-title" id="menuTitle">🐍 Змейка</div>
+    <div class="menu-subtitle" id="menuSubtitle">Классическая игра с модами и скинами</div>
     <div class="menu-stats">
       <div class="stat">
         <div class="stat-value" id="menuHighScore">0</div>
@@ -162,7 +181,13 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
       <span class="menu-btn-icon">👥</span>Авторы
     </button>
     <button class="menu-btn" id="musicBtnMenu" onclick="toggleMusic()">
-      <span class="menu-btn-icon" id="musicIconMenu">🔊</span><span id="musicTextMenu">Музыка</span>
+      <span class="menu-btn-icon" id="musicIconMenu">🔊</span><span id="musicTextMenu" data-i18="music">Музыка</span>
+    </button>
+    <button class="menu-btn" onclick="openSettings()">
+      <span class="menu-btn-icon">⚙️</span><span data-i18="settings">Настройки</span>
+    </button>
+    <button class="menu-btn" onclick="toggleLang()" style="font-size:14px">
+      <span class="menu-btn-icon">🌐</span><span id="langBtnText">EN</span>
     </button>
   </div>
 </div>
@@ -242,6 +267,33 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settingsModal">
+  <div class="settings-content">
+    <h2>⚙️ <span data-i18="settings">Настройки</span></h2>
+    <div class="settings-row">
+      <span class="settings-label" data-i18="sounds">Звуки</span>
+      <button class="settings-toggle on" id="sfxToggle" onclick="toggleSfx()">ВКЛ</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label" data-i18="sfx">Эффекты</span>
+      <button class="settings-toggle on" id="musicToggle2" onclick="toggleMusic2()">ВКЛ</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label" data-i18="language">Язык</span>
+      <div class="lang-btns">
+        <button class="lang-btn ru active" id="langRu" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn en" id="langEn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label" data-i18="controls">Управление</span>
+    </div>
+    <div class="settings-sublabel" id="controlsHint">ПК: WASD / Стрелки</div>
+    <button class="settings-close" onclick="closeSettings()">OK</button>
+  </div>
+</div>
+
 <!-- LOGIN MODAL -->
 <div id="loginModal">
   <div class="login-content">
@@ -302,6 +354,47 @@ function resumeAudio(){
   if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
 }
 
+// ===== i18n =====
+var I18={
+  lang:localStorage.getItem('snk_lang')||'ru',
+  dict:{
+    ru:{play:'Играть',shop:'Магазин',authors:'Авторы',music:'Музыка',login:'Вход',register:'Регистрация',guest:'Играть как гость',nickname:'Никнейм',password:'Пароль',enter:'Войти',exit:'Выйти',authorized:'Авторизован',notAuthorized:'Не авторизован',record:'Рекорд',coins:'Монеты',settings:'Настройки',controls:'Управление',keyboard:'Клавиатура',touch:'Тач',sounds:'Звуки',sfx:'Эффекты',language:'Язык',on:'Вкл',off:'Выкл',guest:'Гость',authorizedAs:'Авторизован',upg:'Улучшения',skins:'Скины'},
+    en:{play:'Play',shop:'Shop',authors:'Authors',music:'Music',login:'Login',register:'Register',guest:'Play as Guest',nickname:'Nickname',password:'Password',enter:'Enter',exit:'Exit',authorized:'Authorized',notAuthorized:'Not authorized',record:'Record',coins:'Coins',settings:'Settings',controls:'Controls',keyboard:'Keyboard',touch:'Touch',sounds:'Sounds',sfx:'Effects',language:'Language',on:'On',off:'Off',guest:'Guest',authorizedAs:'Authorized',upg:'Upgrades',skins:'Skins'}
+  }
+};
+function t(k){return I18.dict[I18.lang][k]||I18.dict['ru'][k]||k;}
+function setLang(lg){I18.lang=lg;localStorage.setItem('snk_lang',lg);applyI18();}
+function applyI18(){
+  var els=document.querySelectorAll('[data-i18]');
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute('data-i18');if(I18.dict[I18.lang][k])els[i].textContent=I18.dict[I18.lang][k];}
+}
+
+// ===== SOUND FX =====
+var sfxGain=null,sfxEnabled=true;
+function initSfx(){
+  if(!audioCtx)initAudio();
+  if(!sfxGain){
+    sfxGain=audioCtx.createGain();
+    sfxGain.gain.value=0.5;
+    sfxGain.connect(audioCtx.destination);
+  }
+}
+function playSfx(type){
+  if(!sfxEnabled)return;
+  initSfx();
+  var osc=audioCtx.createOscillator();
+  var g=audioCtx.createGain();
+  osc.connect(g);g.connect(sfxGain);
+  var now=audioCtx.currentTime;
+  switch(type){
+    case'eat':osc.frequency.value=440;g.gain.setValueAtTime(0.3,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);osc.start(now);osc.stop(now+0.1);break;
+    case'die':osc.frequency.value=200;g.gain.setValueAtTime(0.4,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.5);osc.start(now);osc.stop(now+0.5);break;
+    case'click':osc.frequency.value=600;g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.05);osc.start(now);osc.stop(now+0.05);break;
+    case'buy':osc.frequency.value=800;g.gain.setValueAtTime(0.25,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.15);osc.start(now);osc.stop(now+0.15);break;
+    case'shield':osc.frequency.value=300;g.gain.setValueAtTime(0.3,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.2);osc.start(now);osc.stop(now+0.2);break;
+  }
+}
+
 // ===== DATA =====
 var _d={
   coins:parseInt(localStorage.getItem('snk_c')||'0'),
@@ -315,6 +408,7 @@ var _d={
   music:localStorage.getItem('snk_m')!=='0',
   user:JSON.parse(localStorage.getItem('snk_user')||'null')
 };
+sfxEnabled=localStorage.getItem('snk_sfx')!=='0';
 
 var SKINS={
   classic:{name:'Классик',color:'#00ff00',price:0},
@@ -343,6 +437,7 @@ function init(){
   startMenuSnake();
   updateMusicBtn();
   updateLoginUI();
+  applyI18();
   // Audio inits on first user interaction
   document.addEventListener('click',function(){initAudio();resumeAudio();},{once:true});
   document.addEventListener('touchstart',function(){initAudio();resumeAudio();},{once:true});
@@ -499,6 +594,7 @@ function gameLoop(){
   if(head.x===food.x&&head.y===food.y){
     score+=doubleFood?2:1;
     document.getElementById('scoreDisplay').textContent=score;
+    playSfx('eat');
     placeFood();
     updateSpeed();
     checkMusicSwitch();
@@ -578,6 +674,7 @@ function checkMusicSwitch(){
 function handleDeath(){
   if(hasShield>0){
     hasShield--;
+    playSfx('shield');
     snake=[{x:10,y:10}];dx=0;dy=0;
     placeFood();
     return;
@@ -594,6 +691,7 @@ function handleDeath(){
   saveUserData();
   gameRunning=false;
   if(gameInterval){clearInterval(gameInterval);gameInterval=null;}
+  playSfx('die');
   document.getElementById('finalScore').textContent=score;
   document.getElementById('coinsEarned').textContent=score;
   document.getElementById('gameoverScreen').style.display='flex';
@@ -652,6 +750,25 @@ function equipSkin(id){if(_d.skins.includes(id)){_d.equipped=id;localStorage.set
 // ===== AUTHORS =====
 function openAuthors(){document.getElementById('authorsModal').style.display='flex';}
 function closeAuthors(){document.getElementById('authorsModal').style.display='none';}
+
+// ===== SETTINGS =====
+function openSettings(){document.getElementById('settingsModal').style.display='flex';updateSettingsUI();}
+function closeSettings(){document.getElementById('settingsModal').style.display='none';}
+function updateSettingsUI(){
+  var sfxBtn=document.getElementById('sfxToggle');
+  var musBtn=document.getElementById('musicToggle2');
+  if(sfxBtn){sfxBtn.textContent=sfxEnabled?'ВКЛ':'ВЫКЛ';sfxBtn.className='settings-toggle '+(sfxEnabled?'on':'off');}
+  if(musBtn){musBtn.textContent=_d.music?'ВКЛ':'ВЫКЛ';musBtn.className='settings-toggle '+(_d.music?'on':'off');}
+  var ru=document.getElementById('langRu');var en=document.getElementById('langEn');
+  if(ru){ru.className='lang-btn ru'+(I18.lang==='ru'?' active':'');}
+  if(en){en.className='lang-btn en'+(I18.lang==='en'?' active':'');}
+  var hint=document.getElementById('controlsHint');
+  if(hint)hint.textContent=I18.lang==='en'?'PC: WASD / Arrows | Phone: Swipes':'ПК: WASD / Стрелки | Телефон: Свайпы';
+  applyI18();
+}
+function toggleSfx(){sfxEnabled=!sfxEnabled;localStorage.setItem('snk_sfx',sfxEnabled?1:0);updateSettingsUI();}
+function toggleMusic2(){toggleMusic();updateSettingsUI();}
+function toggleLang(){setLang(I18.lang==='ru'?'en':'ru');updateSettingsUI();}
 
 // ===== AUTH SYSTEM =====
 function openLogin(){
@@ -799,6 +916,28 @@ document.addEventListener('keydown',function(e){
     case'ArrowRight':case'd':case'D':case'в':case'В':if(dx===0){dx=1;dy=0}break;
   }
 });
+
+// ===== TOUCH / SWIPE CONTROLS =====
+var touchStartX=0,touchStartY=0;
+document.addEventListener('touchstart',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(!gameRunning)return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;
+  var diffX=touchStartX-e.changedTouches[0].clientX;
+  var diffY=touchStartY-e.changedTouches[0].clientY;
+  if(Math.abs(diffX)<30&&Math.abs(diffY)<30)return;
+  if(Math.abs(diffX)>Math.abs(diffY)){
+    if(diffX>0&&dx===0){dx=-1;dy=0;}
+    else if(diffX<0&&dx===0){dx=1;dy=0;}
+  } else {
+    if(diffY>0&&dy===0){dx=0;dy=-1;}
+    else if(diffY<0&&dy===0){dx=0;dy=1;}
+  }
+},{passive:true});
 
 // ===== AD CLOSE =====
 function closeAd(pos){
