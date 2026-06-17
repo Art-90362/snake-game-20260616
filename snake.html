@@ -13,6 +13,29 @@ body{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;font-
 .ad-placeholder{color:#555;font-size:11px;text-align:center;padding:10px}
 .ad-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);border:none;color:#888;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px}
 .ad-close:hover{background:rgba(0,0,0,.8);color:#fff}
+/* LOGIN MODAL */
+#loginModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);justify-content:center;align-items:center;z-index:3000}
+.login-content{background:linear-gradient(135deg,#2a2a4a,#1a1a3a);padding:35px;border-radius:20px;text-align:center;border:2px solid rgba(0,255,0,.3);min-width:340px;max-width:90%}
+.login-content h2{color:#00ff00;margin:0 0 25px 0;font-size:28px;text-shadow:0 0 15px rgba(0,255,0,.5)}
+.login-input{width:100%;padding:14px 16px;margin:10px 0;border-radius:10px;border:2px solid #333;background:#1a1a2e;color:#fff;font-size:16px;outline:none;box-sizing:border-box}
+.login-input:focus{border-color:#00ff00;box-shadow:0 0 10px rgba(0,255,0,.3)}
+.login-input::placeholder{color:#666}
+.login-btn{width:100%;padding:14px;margin:8px 0;border:none;border-radius:10px;cursor:pointer;font-size:16px;font-weight:bold;transition:all .2s}
+.login-btn.reg{background:linear-gradient(135deg,#4CAF50,#2E7D32);color:#fff}
+.login-btn.guest{background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff}
+.login-btn:hover{transform:scale(1.02)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.login-error{color:#f44336;font-size:13px;margin:10px 0;min-height:20px}
+.login-or{color:#666;font-size:14px;margin:15px 0}
+.login-user{color:#aaa;font-size:14px;margin-top:15px}
+.login-user span{color:#ffd700;font-weight:bold}
+.login-logout{background:rgba(255,255,255,.1);border:none;color:#888;padding:8px 16px;border-radius:8px;cursor:pointer;margin-top:10px;font-size:13px}
+.login-logout:hover{background:rgba(255,255,255,.2);color:#fff}
+/* USER INFO IN MENU */
+.user-info{display:none;background:rgba(0,0,0,.4);padding:12px 16px;border-radius:10px;margin-bottom:10px;border:1px solid rgba(255,255,255,.1)}
+.user-info.show{display:block}
+.user-name{color:#ffd700;font-weight:bold;font-size:14px}
+.user-status{color:#888;font-size:11px;margin-top:3px}
 .menu-container{display:flex;width:100vw;height:100vh}
 .menu-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px}
 .menu-right{width:320px;background:rgba(0,0,0,.5);padding:40px 30px;display:flex;flex-direction:column;justify-content:center;gap:15px;border-left:2px solid rgba(0,255,0,.2)}
@@ -124,7 +147,12 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
     <canvas id="menuCanvas" class="menu-canvas" width="500" height="350"></canvas>
   </div>
   <div class="menu-right">
-    <button class="menu-btn green" onclick="playGame()">
+    <div class="user-info" id="userInfo">
+      <div class="user-name" id="userName">Гость</div>
+      <div class="user-status" id="userStatus">Не авторизован</div>
+      <button class="login-logout" id="btnLogout" onclick="logout()" style="display:none">Выйти</button>
+    </div>
+    <button class="menu-btn green" onclick="openLogin()">
       <span class="menu-btn-icon">▶️</span>Играть
     </button>
     <button class="menu-btn orange" onclick="openShop()">
@@ -214,6 +242,21 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
   </div>
 </div>
 
+<!-- LOGIN MODAL -->
+<div id="loginModal">
+  <div class="login-content">
+    <h2>🐍 Вход</h2>
+    <input type="text" id="loginUsername" class="login-input" placeholder="Никнейм" maxlength="16">
+    <input type="password" id="loginPassword" class="login-input" placeholder="Пароль">
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn reg" id="btnLogin" onclick="doLogin()">🔐 Войти</button>
+    <button class="login-btn reg" onclick="doRegister()">📝 Регистрация</button>
+    <div class="login-or">— или —</div>
+    <button class="login-btn guest" onclick="playAsGuest()">👤 Играть как гость</button>
+    <div class="login-user" id="loginUserInfo"></div>
+  </div>
+</div>
+
 <!-- GAMEOVER SCREEN -->
 <div id="gameoverScreen">
   <div class="gameover-title">💀 Игра окончена!</div>
@@ -269,7 +312,8 @@ var _d={
   upD:localStorage.getItem('snk_up_d')==='1',
   upG:localStorage.getItem('snk_up_g')==='1',
   hs:parseInt(localStorage.getItem('snk_hs')||'0'),
-  music:localStorage.getItem('snk_m')!=='0'
+  music:localStorage.getItem('snk_m')!=='0',
+  user:JSON.parse(localStorage.getItem('snk_user')||'null')
 };
 
 var SKINS={
@@ -288,7 +332,7 @@ var SKINS={
 // ===== GAME STATE =====
 var menuCanvas,menuCtx,menuSnake=[],menuFood={},menuDx=1,menuDy=0,menuInterval=null;
 var gameCanvas,gameCtx,gridSize=20,tileCount=20;
-var snake=[],food={},dx=0,dy=0,score=0,gameInterval=null,baseSpeed=90;
+var snake=[],food={},dx=0,dy=0,score=0,gameInterval=null,baseSpeed=140;
 var gameRunning=false,currentTrack='theme';
 var hasShield=0,doubleFood=false,growthBoost=false;
 
@@ -298,6 +342,7 @@ function init(){
   updateMenuStats();
   startMenuSnake();
   updateMusicBtn();
+  updateLoginUI();
   // Audio inits on first user interaction
   document.addEventListener('click',function(){initAudio();resumeAudio();},{once:true});
   document.addEventListener('touchstart',function(){initAudio();resumeAudio();},{once:true});
@@ -546,6 +591,7 @@ function handleDeath(){
     document.getElementById('newHighScoreText').style.display='none';
   }
   localStorage.setItem('snk_c',_d.coins);
+  saveUserData();
   gameRunning=false;
   if(gameInterval){clearInterval(gameInterval);gameInterval=null;}
   document.getElementById('finalScore').textContent=score;
@@ -570,10 +616,10 @@ function updateShopButtons(){
   if(_d.upD){btnD.textContent='✓';btnD.classList.add('bought');btnD.disabled=true;} else {btnD.disabled=_d.coins<150;}
   if(_d.upG){btnG.textContent='✓';btnG.classList.add('bought');btnG.disabled=true;} else {btnG.disabled=_d.coins<80;}
 }
-function buySlow(){if(_d.coins>=50&&!_d.upS){_d.coins-=50;_d.upS=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_s','1');updateMenuStats();updateShopButtons();}}
-function buyShield(){if(_d.coins>=100&&!_d.upSh){_d.coins-=100;_d.upSh=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_sh','1');updateMenuStats();updateShopButtons();}}
-function buyDouble(){if(_d.coins>=150&&!_d.upD){_d.coins-=150;_d.upD=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_d','1');updateMenuStats();updateShopButtons();}}
-function buyGrowth(){if(_d.coins>=80&&!_d.upG){_d.coins-=80;_d.upG=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_g','1');updateMenuStats();updateShopButtons();}}
+function buySlow(){if(_d.coins>=50&&!_d.upS){_d.coins-=50;_d.upS=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_s','1');updateMenuStats();updateShopButtons();saveUserData();}}
+function buyShield(){if(_d.coins>=100&&!_d.upSh){_d.coins-=100;_d.upSh=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_sh','1');updateMenuStats();updateShopButtons();saveUserData();}}
+function buyDouble(){if(_d.coins>=150&&!_d.upD){_d.coins-=150;_d.upD=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_d','1');updateMenuStats();updateShopButtons();saveUserData();}}
+function buyGrowth(){if(_d.coins>=80&&!_d.upG){_d.coins-=80;_d.upG=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_g','1');updateMenuStats();updateShopButtons();saveUserData();}}
 function renderSkinGrid(){
   var grid=document.getElementById('skinGrid');grid.innerHTML='';
   for(var id in SKINS){
@@ -598,13 +644,125 @@ function buySkin(id){
     updateMenuStats();
     renderSkinGrid();
     updateShopButtons();
+    saveUserData();
   }
 }
-function equipSkin(id){if(_d.skins.includes(id)){_d.equipped=id;localStorage.setItem('snk_e',id);renderSkinGrid();}}
+function equipSkin(id){if(_d.skins.includes(id)){_d.equipped=id;localStorage.setItem('snk_e',id);renderSkinGrid();saveUserData();}}
 
 // ===== AUTHORS =====
 function openAuthors(){document.getElementById('authorsModal').style.display='flex';}
 function closeAuthors(){document.getElementById('authorsModal').style.display='none';}
+
+// ===== AUTH SYSTEM =====
+function openLogin(){
+  var modal=document.getElementById('loginModal');
+  modal.style.display='flex';
+  document.getElementById('loginUsername').value='';
+  document.getElementById('loginPassword').value='';
+  document.getElementById('loginError').textContent='';
+  updateLoginUI();
+}
+function closeLogin(){document.getElementById('loginModal').style.display='none';}
+
+function updateLoginUI(){
+  var info=document.getElementById('userInfo');
+  var nameEl=document.getElementById('userName');
+  var statusEl=document.getElementById('userStatus');
+  var logoutBtn=document.getElementById('btnLogout');
+  if(_d.user){
+    info.classList.add('show');
+    nameEl.textContent=_d.user.name;
+    statusEl.textContent='👤 Авторизован';
+    logoutBtn.style.display='block';
+  } else {
+    info.classList.add('show');
+    nameEl.textContent='Гость';
+    statusEl.textContent='Не авторизован';
+    logoutBtn.style.display='none';
+  }
+}
+
+function doRegister(){
+  var u=document.getElementById('loginUsername').value.trim();
+  var p=document.getElementById('loginPassword').value;
+  var err=document.getElementById('loginError');
+  if(u.length<3){err.textContent='Никнейм мин. 3 символа';return;}
+  if(p.length<4){err.textContent='Пароль мин. 4 символа';return;}
+  var users=JSON.parse(localStorage.getItem('snk_users')||'{}');
+  if(users[u]){err.textContent='Никнейм занят';return;}
+  users[u]={password:simpleHash(p),coins:0,hs:0,skins:'["classic"]',equipped:'classic',upS:false,upSh:false,upD:false,upG:false};
+  localStorage.setItem('snk_users',JSON.stringify(users));
+  _d.user={name:u};
+  localStorage.setItem('snk_user',JSON.stringify(_d.user));
+  closeLogin();
+  updateLoginUI();
+  playGame();
+}
+
+function doLogin(){
+  var u=document.getElementById('loginUsername').value.trim();
+  var p=document.getElementById('loginPassword').value;
+  var err=document.getElementById('loginError');
+  var users=JSON.parse(localStorage.getItem('snk_users')||'{}');
+  if(!users[u]){err.textContent='Пользователь не найден';return;}
+  if(users[u].password!==simpleHash(p)){err.textContent='Неверный пароль';return;}
+  _d.user={name:u};
+  localStorage.setItem('snk_user',JSON.stringify(_d.user));
+  // Load user data
+  _d.coins=users[u].coins||0;
+  _d.hs=users[u].hs||0;
+  _d.skins=JSON.parse(users[u].skins||'["classic"]');
+  _d.equipped=users[u].equipped||'classic';
+  _d.upS=users[u].upS||false;
+  _d.upSh=users[u].upSh||false;
+  _d.upD=users[u].upD||false;
+  _d.upG=users[u].upG||false;
+  localStorage.setItem('snk_c',_d.coins);
+  localStorage.setItem('snk_hs',_d.hs);
+  localStorage.setItem('snk_s',JSON.stringify(_d.skins));
+  localStorage.setItem('snk_e',_d.equipped);
+  closeLogin();
+  updateLoginUI();
+  updateMenuStats();
+  playGame();
+}
+
+function playAsGuest(){
+  _d.user=null;
+  localStorage.removeItem('snk_user');
+  closeLogin();
+  updateLoginUI();
+  playGame();
+}
+
+function logout(){
+  _d.user=null;
+  localStorage.removeItem('snk_user');
+  updateLoginUI();
+}
+
+function saveUserData(){
+  if(!_d.user)return;
+  var u=_d.user.name;
+  var users=JSON.parse(localStorage.getItem('snk_users')||'{}');
+  if(users[u]){
+    users[u].coins=_d.coins;
+    users[u].hs=_d.hs;
+    users[u].skins=JSON.stringify(_d.skins);
+    users[u].equipped=_d.equipped;
+    users[u].upS=_d.upS;
+    users[u].upSh=_d.upSh;
+    users[u].upD=_d.upD;
+    users[u].upG=_d.upG;
+    localStorage.setItem('snk_users',JSON.stringify(users));
+  }
+}
+
+function simpleHash(str){
+  var h=0;
+  for(var i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h=h&h;}
+  return h.toString();
+}
 
 // ===== MUSIC =====
 function toggleMusic(){
