@@ -945,6 +945,7 @@ function gameLoop(){
     checkMusicSwitch();
   } else {
     if(!growthBoost)snake.pop();
+    if(growthBoost)snake.push({});
   }
   // Enemy movement & eating
   if(gameMode==='enemy'&&enemyAlive){enemyMoveCounter++;if(enemyMoveCounter>=2){moveEnemy();checkEnemyFood();enemyMoveCounter=0;}}
