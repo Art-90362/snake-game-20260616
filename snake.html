@@ -282,6 +282,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
     <div class="shop-tabs">
       <button class="shop-tab active" onclick="switchTab('upgrades')">⬆️ Улучшения</button>
       <button class="shop-tab" onclick="switchTab('skins')">🎨 Скины</button>
+      <button class="shop-tab" onclick="switchTab('fields')">🎮 Поля</button>
     </div>
     <div id="tabUpgrades">
       <div class="shop-item">
@@ -302,6 +303,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
       </div>
     </div>
     <div id="tabSkins" style="display:none"><div class="skin-grid" id="skinGrid"></div></div>
+    <div id="tabFields" style="display:none"><div class="skin-grid" id="fieldGrid"></div><div style="margin-top:15px;text-align:left"><h4 style="color:#ff9800;margin-bottom:10px">📷 Свой фон</h4><input type="text" id="customBgUrl" class="login-input" placeholder="URL картинки для поля" style="font-size:13px;padding:10px"><button class="shop-item-btn" style="margin-top:8px" onclick="setCustomBg()">Установить (1000🪙)</button><p style="color:#888;font-size:11px;margin-top:5px">Вставь URL изображения (jpg/png/gif)</p></div></div>
     <button class="shop-close" onclick="closeShop()">Закрыть</button>
   </div>
 </div>
@@ -657,6 +659,20 @@ var SKINS={
   aqua:{name:'Аква',color:'#00FFFF',price:130}
 };
 
+var FIELDS={
+  classic_field:{name:'Классика',bg:'#0a0a0a',grid:'rgba(255,255,255,0.03)',price:0},
+  blue_field:{name:'Синий',bg:'#0a1628',grid:'rgba(33,150,243,0.05)',price:400},
+  red_field:{name:'Красный',bg:'#280a0a',grid:'rgba(244,67,54,0.05)',price:400},
+  green_field:{name:'Лесной',bg:'#0a1a0a',grid:'rgba(76,175,80,0.05)',price:450},
+  purple_field:{name:'Космос',bg:'#1a0a2e',grid:'rgba(156,39,176,0.06)',price:500},
+  gold_field:{name:'Золото',bg:'#1a1200',grid:'rgba(255,215,0,0.06)',price:600},
+  neon_field:{name:'Неон',bg:'#001a1a',grid:'rgba(0,255,136,0.08)',price:700},
+  sunset_field:{name:'Закат',bg:'#1a0f0f',grid:'rgba(255,87,34,0.06)',price:550},
+  ice_field:{name:'Лёд',bg:'#0a1a2a',grid:'rgba(0,188,212,0.06)',price:600},
+  fire_field:{name:'Огонь',bg:'#1a0505',grid:'rgba(255,152,0,0.07)',price:650},
+  custom_field:{name:'Свой фон',bg:'#0a0a0a',grid:'rgba(255,255,255,0.03)',price:1000,custom:true}
+};
+
 // ===== GAME STATE =====
 var menuCanvas,menuCtx,menuSnake=[],menuFood={},menuDx=1,menuDy=0,menuInterval=null;
 var gameCanvas,gameCtx,gridSize=20,tileCount=20;
@@ -668,6 +684,8 @@ var enemySnake=[],enemyDx=1,enemyDy=0;
 var timeLeft=0,timerInterval=null;
 var enemyAlive=true;
 var scoreGoal=0;
+var currentField='classic_field';
+var customBgImage=null;
 
 // ===== INIT =====
 function init(){
@@ -679,6 +697,16 @@ function init(){
   updateMusicBtn();
   updateLoginUI();
   applyI18();
+  // Load custom background
+  var customBgUrl=localStorage.getItem('snk_custom_bg');
+  if(customBgUrl){
+    customBgImage=new Image();
+    customBgImage.src=customBgUrl;
+  }
+  // Load field
+  _equippedField=localStorage.getItem('snk_field')||'classic_field';
+  currentField=_equippedField;
+  _ownedFields=JSON.parse(localStorage.getItem('snk_fields')||'["classic_field"]');
   if(_d.music){
     initAudio();
     resumeAudio();
@@ -840,7 +868,7 @@ function startActualGame(){
   if(gameInterval)clearInterval(gameInterval);
   gameInterval=setInterval(gameLoop,currentSpeed);
   if(_d.music){
-    bgMusic.src=gameMode==='enemy'?'snake_intense.mp3':'snake_theme.mp3';
+    bgMusic.src=gameMode==='enemy'?'snake_intense.mp3':gameMode==='time'?'snake_time.mp3':'snake_theme.mp3';
     bgMusic.loop=true;
     bgMusic.load();
     bgMusic.play().then(function(){}).catch(function(e){console.log('Play error:',e.message)});
@@ -928,34 +956,59 @@ function moveEnemy(){
   var eh=enemySnake[0];
   var px=snake[0].x,py=snake[0].y;
   var ex=eh.x,ey=eh.y;
-  var diffX=px-ex,diffY=py-ey;
-  var nx=enemyDx,ny=enemyDy;
-  if(Math.abs(diffX)>Math.abs(diffY)){
-    if(diffX>0&&enemyDx===0){nx=1;ny=0;}
-    else if(diffX<0&&enemyDx===0){nx=-1;ny=0;}
-    else if(diffY>0&&enemyDy===0&&Math.random()<0.3){nx=0;ny=1;}
-    else if(diffY<0&&enemyDy===0&&Math.random()<0.3){nx=0;ny=-1;}
+  // Predict player next position
+  var pnx=snake[0].x+dx, pny=snake[0].y+dy;
+  if(pnx<0)pnx=0;if(pnx>=tileCount)pnx=tileCount-1;
+  if(pny<0)pny=0;if(pny>=tileCount)pny=tileCount-1;
+  // Smart chase - try to get ahead of player
+  var tdx=0,tdy=0;
+  var pdiffX=pnx-ex,pdiffY=pny-ey;
+  if(Math.abs(pdiffX)>=Math.abs(pdiffY)){
+    if(pdiffX>0){tdx=1;tdy=0;}else if(pdiffX<0){tdx=-1;tdy=0;}
+    else {tdy=pdiffY>0?1:-1;}
   } else {
-    if(diffY>0&&enemyDy===0){nx=0;ny=1;}
-    else if(diffY<0&&enemyDy===0){nx=0;ny=-1;}
-    else if(diffX>0&&enemyDx===0&&Math.random()<0.3){nx=1;ny=0;}
-    else if(diffX<0&&enemyDx===0&&Math.random()<0.3){nx=-1;ny=0;}
+    if(pdiffY>0){tdy=1;tdx=0;}else if(pdiffY<0){tdy=-1;tdx=0;}
+    else {tdx=pdiffX>0?1:-1;}
   }
-  if(Math.random()<0.15){
-    var dirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){return!(d[0]===-enemyDx&&d[1]===-enemyDy)});
-    var nd=dirs[Math.floor(Math.random()*dirs.length)];
-    nx=nd[0];ny=nd[1];
+  // Check if move is safe
+  var nhead={x:eh.x+tdx,y:eh.y+tdy};
+  var safe=enemyCanMove(nhead);
+  if(!safe){
+    // Try alternate paths
+    var alts=[[1,0],[-1,0],[0,1],[0,-1]];
+    var best=null,bestDist=999;
+    for(var a=0;a<alts.length;a++){
+      var nh={x:eh.x+alts[a][0],y:eh.y+alts[a][1]};
+      if(enemyCanMove(nh)){
+        var d=Math.abs(nh.x-pnx)+Math.abs(nh.y-pny);
+        if(d<bestDist){bestDist=d;best=nh;}
+      }
+    }
+    if(best){nhead=best;tdx=best.x-eh.x;tdy=best.y-eh.y;}
   }
-  enemyDx=nx;enemyDy=ny;
-  var nhead={x:eh.x+enemyDx,y:eh.y+enemyDy};
+  // Check wall collision for new direction
   if(nhead.x<0||nhead.x>=tileCount||nhead.y<0||nhead.y>=tileCount){
     var dirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){return!(d[0]===-enemyDx&&d[1]===-enemyDy)});
-    var nd=dirs[Math.floor(Math.random()*dirs.length)];
-    enemyDx=nd[0];enemyDy=nd[1];
-    nhead={x:eh.x+enemyDx,y:eh.y+enemyDy};
+    for(var i=0;i<dirs.length;i++){
+      var test={x:eh.x+dirs[i][0],y:eh.y+dirs[i][1]};
+      if(test.x>=0&&test.x<tileCount&&test.y>=0&&test.y<tileCount&&enemyCanMove(test)){
+        tdx=dirs[i][0];tdy=dirs[i][1];nhead=test;break;
+      }
+    }
   }
+  enemyDx=tdx;enemyDy=tdy;
   enemySnake.unshift(nhead);
   enemySnake.pop();
+}
+
+function enemyCanMove(pos){
+  // Check wall
+  if(pos.x<0||pos.x>=tileCount||pos.y<0||pos.y>=tileCount)return false;
+  // Check self collision
+  for(var i=0;i<enemySnake.length;i++){
+    if(enemySnake[i].x===pos.x&&enemySnake[i].y===pos.y)return false;
+  }
+  return true;
 }
 
 function handleTimeWin(){
@@ -975,13 +1028,18 @@ function handleTimeWin(){
 }
 
 function drawGame(){
-  gameCtx.fillStyle='#0a0a0a';
-  gameCtx.fillRect(0,0,gameCanvas.width,gameCanvas.height);
-  // Grid
-  gameCtx.strokeStyle='rgba(255,255,255,0.03)';
-  for(var i=0;i<=tileCount;i++){
-    gameCtx.beginPath();gameCtx.moveTo(i*gridSize,0);gameCtx.lineTo(i*gridSize,gameCanvas.height);gameCtx.stroke();
-    gameCtx.beginPath();gameCtx.moveTo(0,i*gridSize);gameCtx.lineTo(gameCanvas.width,i*gridSize);gameCtx.stroke();
+  var fld=FIELDS[currentField]||FIELDS.classic_field;
+  if(customBgImage&&currentField==='custom_field'){
+    gameCtx.drawImage(customBgImage,0,0,gameCanvas.width,gameCanvas.height);
+  } else {
+    gameCtx.fillStyle=fld.bg;
+    gameCtx.fillRect(0,0,gameCanvas.width,gameCanvas.height);
+    // Grid
+    gameCtx.strokeStyle=fld.grid;
+    for(var i=0;i<=tileCount;i++){
+      gameCtx.beginPath();gameCtx.moveTo(i*gridSize,0);gameCtx.lineTo(i*gridSize,gameCanvas.height);gameCtx.stroke();
+      gameCtx.beginPath();gameCtx.moveTo(0,i*gridSize);gameCtx.lineTo(gameCanvas.width,i*gridSize);gameCtx.stroke();
+    }
   }
   // Food
   var foodColor=doubleFood?'#ff6600':'#ff4444';
@@ -1099,8 +1157,10 @@ function closeShop(){document.getElementById('shopModal').style.display='none';}
 function switchTab(tab){
   document.getElementById('tabUpgrades').style.display=tab==='upgrades'?'block':'none';
   document.getElementById('tabSkins').style.display=tab==='skins'?'block':'none';
+  document.getElementById('tabFields').style.display=tab==='fields'?'block':'none';
   document.querySelectorAll('.shop-tab').forEach(function(t){t.classList.remove('active')});
   event.target.classList.add('active');
+  if(tab==='fields')renderFieldGrid();
 }
 function updateShopButtons(){
   var btnS=document.getElementById('btnSlow'),btnSh=document.getElementById('btnShield'),btnD=document.getElementById('btnDouble'),btnG=document.getElementById('btnGrowth');
@@ -1141,6 +1201,71 @@ function buySkin(id){
   }
 }
 function equipSkin(id){if(_d.skins.includes(id)){_d.equipped=id;localStorage.setItem('snk_e',id);renderSkinGrid();saveUserData();}}
+
+// ===== FIELDS =====
+var _ownedFields=JSON.parse(localStorage.getItem('snk_fields')||'["classic_field"]');
+var _equippedField=localStorage.getItem('snk_field')||'classic_field';
+currentField=_equippedField;
+
+function renderFieldGrid(){
+  var grid=document.getElementById('fieldGrid');
+  if(!grid)return;
+  var html='';
+  for(var id in FIELDS){
+    var f=FIELDS[id];
+    if(f.custom)continue;
+    var owned=_ownedFields.includes(id);
+    var equipped=_equippedField===id;
+    html+='<div class="skin-card'+(owned?' owned':'')+(equipped?' equipped':'')+'" onclick="'+(owned?'equipField(\''+id+'\')':'buyField(\''+id+'\')')+'">'+
+      '<div style="width:80px;height:50px;background:'+f.bg+';border-radius:5px;margin:0 auto 8px;box-shadow:inset 0 0 10px rgba(0,0,0,0.5)"></div>'+
+      '<h4>'+f.name+'</h4><p>'+(equipped?'✓ Экипировано':owned?'Выбрать':f.price+' 🪙')+'</p></div>';
+  }
+  grid.innerHTML=html;
+}
+
+function buyField(id){
+  var f=FIELDS[id];
+  if(!f||f.price===0)return;
+  if(_d.coins>=f.price&&!_ownedFields.includes(id)){
+    _d.coins-=f.price;
+    _ownedFields.push(id);
+    localStorage.setItem('snk_c',_d.coins);
+    localStorage.setItem('snk_fields',JSON.stringify(_ownedFields));
+    updateMenuStats();
+    renderFieldGrid();
+    saveUserData();
+  }
+}
+
+function equipField(id){
+  if(!_ownedFields.includes(id))return;
+  _equippedField=id;
+  currentField=id;
+  localStorage.setItem('snk_field',id);
+  renderFieldGrid();
+  saveUserData();
+}
+
+function setCustomBg(){
+  if(_d.coins<1000)return;
+  var url=document.getElementById('customBgUrl').value.trim();
+  if(!url)return;
+  _d.coins-=1000;
+  localStorage.setItem('snk_c',_d.coins);
+  localStorage.setItem('snk_custom_bg',url);
+  customBgImage=new Image();
+  customBgImage.src=url;
+  _equippedField='custom_field';
+  currentField='custom_field';
+  localStorage.setItem('snk_field','custom_field');
+  if(!_ownedFields.includes('custom_field')){
+    _ownedFields.push('custom_field');
+    localStorage.setItem('snk_fields',JSON.stringify(_ownedFields));
+  }
+  updateMenuStats();
+  renderFieldGrid();
+  saveUserData();
+}
 
 // ===== AUTHORS =====
 function openAuthors(){document.getElementById('authorsModal').style.display='flex';}
