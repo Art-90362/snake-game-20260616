@@ -87,7 +87,7 @@ canvas{border:3px solid #333;border-radius:10px;background:#0a0a0a;box-shadow:0 
 </style>
 </head>
 <body>
-<div id="loadingScreen" class="loading-screen">
+<div id="loadingScreen" class="loading-screen" onclick="try{bgMusic.volume=0.3;bgMusic.play().catch(function(){})}catch(e){}" style="cursor:pointer">
 <div class="loading-title">🐍 Змейка</div>
 <div class="snake-loader">
 <div class="snake-segment"></div>
@@ -96,6 +96,7 @@ canvas{border:3px solid #333;border-radius:10px;background:#0a0a0a;box-shadow:0 
 </div>
 <div class="loading-bar-container"><div id="loadingBar" class="loading-bar"></div></div>
 <div class="loading-text" id="loadingText">Загрузка<span class="loading-dots">...</span></div>
+<div class="loading-text" style="margin-top:8px;font-size:12px;color:#888" id="musicHint">🔊 кликни для музыки</div>
 <div id="errorScreen" class="error-screen">
 <h2>⚠️ Ошибка загрузки</h2>
 <p id="errorMsg">Не удалось загрузить игру. Проверьте интернет-соединение.</p>
@@ -209,7 +210,7 @@ function antiCheat(){var stored=parseInt(localStorage.getItem('snk_cs')||'0');re
 function showAntiCheat(msg){document.getElementById('anticheatMsg').textContent=msg;document.getElementById('anticheatWarning').style.display='block';setTimeout(function(){document.getElementById('anticheatWarning').style.display='none'},3000)}
 function toggleMusic(){_d.music=!_d.music;localStorage.setItem('snk_m',_d.music?'1':'0');if(_d.music){bgMusic.play().catch(function(){});musicToggle.textContent='🔊'}else{bgMusic.pause();musicToggle.textContent='🔇'}}
 function initMusic(){bgMusic.volume=0.3;if(_d.music){bgMusic.play().catch(function(){});musicToggle.textContent='🔊'}else{musicToggle.textContent='🔇'}}
-function showLoading(){var bar=document.getElementById('loadingBar');var text=document.getElementById('loadingText');var err=document.getElementById('errorScreen');var pr=0;var loaded=0;var total=3;var tracks=['snake_theme.mp3','snake_calm.mp3','snake_intense.mp3'];function setPr(p){pr=p;bar.style.width=pr+'%'}function log(s){console.log('[LOAD] '+s+new Date().toISOString().substr(11,8))}function onLoad(){loaded++;setPr(Math.round((loaded/total)*100));text.innerHTML='Загрузка '+loaded+'/'+total+' <span class="loading-dots">...</span>';log('loaded:'+loaded);if(loaded>=total){setPr(100);log('ALL DONE - starting');setTimeout(function(){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()},100)}}function onError(src){log('ERR:'+src);loaded++;if(loaded>=total){log('ALL TRIED');setPr(100);setTimeout(function(){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()},200)}}tracks.forEach(function(src){log('trying:'+src);var a=new Audio();a.preload='auto';a.addEventListener('loadedmetadata',onLoad,false);a.addEventListener('error',function(){onError(src)},false);a.addEventListener('canplaythrough',onLoad,false);a.src=src;a.load()});setPr(10);text.innerHTML='Загрузка <span class="loading-dots">...</span>';setTimeout(function(){setPr(40);log('still loading...')},500);setTimeout(function(){setPr(70);log('almost there...')},1500);setTimeout(function(){setPr(90);log('final stretch...')},2500);setTimeout(function(){if(loaded<total){log('TIMEOUT forcing start');setPr(100);document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()}},3500)}
+function showLoading(){var bar=document.getElementById('loadingBar');var text=document.getElementById('loadingText');var musicHint=document.getElementById('musicHint');var pr=0;function setPr(p){pr=p;bar.style.width=pr+'%'}setPr(20);text.innerHTML='Подготовка <span class="loading-dots">...</span>';setTimeout(function(){setPr(50);text.innerHTML='Загрузка графики <span class="loading-dots">...</span>'},300);setTimeout(function(){setPr(80);text.innerHTML='Почти готово <span class="loading-dots">...</span>'},800);setTimeout(function(){setPr(100);text.innerHTML='Готово!';if(musicHint)musicHint.style.display='none';document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()},1200)}
 function init(){_d.checksum=calcChecksum();localStorage.setItem('snk_cs',_d.checksum);totalCoinsElement.textContent=_d.coins;highScoreElement.textContent=_d.hs;renderSkinGrid();drawGame();showLoading()}
 function openShop(){document.getElementById('shopCoins').textContent=_d.coins;updateShopButtons();renderSkinGrid();document.getElementById('shopModal').style.display='flex'}
 function closeShop(){document.getElementById('shopModal').style.display='none'}
