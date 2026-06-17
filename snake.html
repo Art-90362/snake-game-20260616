@@ -299,8 +299,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
         <button class="shop-item-btn" id="btnDouble" onclick="buyDouble()">150 🪙</button>
       </div>
       <div class="shop-item">
-        <div class="shop-item-info"><h3>⏩ Рост</h3><p>Растёт при еде</p></div>
-        <button class="shop-item-btn" id="btnGrowth" onclick="buyGrowth()">80 🪙</button>
+
       </div>
     </div>
     <div id="tabSkins" style="display:none"><div class="skin-grid" id="skinGrid"></div></div>
@@ -340,6 +339,10 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
     <div class="settings-row">
       <span class="settings-label" data-i18="sfx">Эффекты</span>
       <button class="settings-toggle on" id="sfxToggle" onclick="toggleSfx()">ВКЛ</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">📈 Рост+2</span>
+      <button class="settings-toggle" id="growthToggle" onclick="toggleGrowth()">ВЫКЛ</button>
     </div>
     <div class="settings-row">
       <span class="settings-label" data-i18="language">Язык</span>
@@ -635,7 +638,7 @@ var _d={
   upS:localStorage.getItem('snk_up_s')==='1',
   upSh:localStorage.getItem('snk_up_sh')==='1',
   upD:localStorage.getItem('snk_up_d')==='1',
-  upG:localStorage.getItem('snk_up_g')==='1',
+
   hs:parseInt(localStorage.getItem('snk_hs')||'0'),
   music:localStorage.getItem('snk_m')!=='0',
   user:JSON.parse(localStorage.getItem('snk_user')||'null')
@@ -663,6 +666,7 @@ var SKINS={
   orange:{name:'Оранж.',color:'#FFA500',price:140},
   aqua:{name:'Аква',color:'#00FFFF',price:260}
 };
+};
 
 var FIELDS={
   classic_field:{name:'Классика',bg:'#0a0a0a',grid:'rgba(255,255,255,0.03)',price:0},
@@ -684,6 +688,7 @@ var gameCanvas,gameCtx,gridSize=20,tileCount=20;
 var snake=[],food={},dx=0,dy=0,score=0,gameInterval=null,baseSpeed=140;
 var gameRunning=false,currentTrack='theme';
 var hasShield=0,doubleFood=false,growthBoost=false;
+if(localStorage.getItem('snk_growth')==='1')growthBoost=true;
 var gameMode='classic';
 var enemySnake=[],enemyDx=1,enemyDy=0;
 var timeLeft=0,timerInterval=null;
@@ -843,7 +848,7 @@ function startActualGame(){
   document.getElementById('scoreDisplay').textContent='0';
   hasShield=_d.upSh?3:0;
   doubleFood=_d.upD;
-  growthBoost=_d.upG;
+  growthBoost=localStorage.getItem('snk_growth')==='1';
   currentSpeed=baseSpeed;
   gameRunning=true;
   enemyAlive=true;
@@ -945,12 +950,12 @@ function gameLoop(){
     var tg=document.getElementById('timeGoalDisplay');
     if(tg&&tg.style.display!=='none')tg.textContent='Цель: '+score+'/'+scoreGoal;
     playSfx('eat');
+    if(growthBoost)snake.push({}); // extra segment when eating
     placeFood();
     updateSpeed();
     checkMusicSwitch();
   } else {
     if(!growthBoost)snake.pop();
-    if(growthBoost)snake.push({});
   }
   // Enemy movement & eating
   if(gameMode==='enemy'&&enemyAlive){enemyMoveCounter++;if(enemyMoveCounter>=2){moveEnemy();checkEnemyFood();enemyMoveCounter=0;}}
@@ -1190,16 +1195,14 @@ function switchTab(tab){
   else if(tab==='refund')renderRefundList();
 }
 function updateShopButtons(){
-  var btnS=document.getElementById('btnSlow'),btnSh=document.getElementById('btnShield'),btnD=document.getElementById('btnDouble'),btnG=document.getElementById('btnGrowth');
+  var btnS=document.getElementById('btnSlow'),btnSh=document.getElementById('btnShield'),btnD=document.getElementById('btnDouble');
   if(_d.upS){btnS.textContent='✓';btnS.classList.add('bought');btnS.disabled=true;} else {btnS.disabled=_d.coins<50;}
   if(_d.upSh){btnSh.textContent='✓';btnSh.classList.add('bought');btnSh.disabled=true;} else {btnSh.disabled=_d.coins<100;}
   if(_d.upD){btnD.textContent='✓';btnD.classList.add('bought');btnD.disabled=true;} else {btnD.disabled=_d.coins<150;}
-  if(_d.upG){btnG.textContent='✓';btnG.classList.add('bought');btnG.disabled=true;} else {btnG.disabled=_d.coins<80;}
 }
 function buySlow(){if(_d.coins>=50&&!_d.upS){_d.coins-=50;_d.upS=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_s','1');updateMenuStats();updateShopButtons();saveUserData();}}
 function buyShield(){if(_d.coins>=100&&!_d.upSh){_d.coins-=100;_d.upSh=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_sh','1');updateMenuStats();updateShopButtons();saveUserData();}}
 function buyDouble(){if(_d.coins>=150&&!_d.upD){_d.coins-=150;_d.upD=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_d','1');updateMenuStats();updateShopButtons();saveUserData();}}
-function buyGrowth(){if(_d.coins>=80&&!_d.upG){_d.coins-=80;_d.upG=true;localStorage.setItem('snk_c',_d.coins);localStorage.setItem('snk_up_g','1');updateMenuStats();updateShopButtons();saveUserData();}}
 function renderSkinGrid(){
   var grid=document.getElementById('skinGrid');grid.innerHTML='';
   for(var id in SKINS){
@@ -1337,7 +1340,7 @@ function renderRefundList(){
   if(_d.upS)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upS\',50)"><h4>⬆️ Замедление</h4><p style="color:#ff9800">+25 🪙</p></div>';
   if(_d.upSh)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upSh\',100)"><h4>🛡️ Щит</h4><p style="color:#ff9800">+50 🪙</p></div>';
   if(_d.upD)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upD\',150)"><h4>x2 Яблоко</h4><p style="color:#ff9800">+75 🪙</p></div>';
-  if(_d.upG)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upG\',200)"><h4>📈 Рост+2</h4><p style="color:#ff9800">+100 🪙</p></div>';
+
   if(!html)html='<p style="color:#888;text-align:center">Нет покупок для возврата</p>';
   el.innerHTML=html;
 }
@@ -1389,8 +1392,10 @@ function closeSettings(){document.getElementById('settingsModal').style.display=
 function updateSettingsUI(){
   var sfxBtn=document.getElementById('sfxToggle');
   var musBtn=document.getElementById('musicToggle2');
+  var grBtn=document.getElementById('growthToggle');
   if(sfxBtn){sfxBtn.textContent=sfxEnabled?'ВКЛ':'ВЫКЛ';sfxBtn.className='settings-toggle '+(sfxEnabled?'on':'off');}
   if(musBtn){musBtn.textContent=_d.music?'ВКЛ':'ВЫКЛ';musBtn.className='settings-toggle '+(_d.music?'on':'off');}
+  if(grBtn){grBtn.textContent=growthBoost?'ВКЛ':'ВЫКЛ';grBtn.className='settings-toggle '+(growthBoost?'on':'off');}
   var ru=document.getElementById('langRu');var en=document.getElementById('langEn');
   if(ru){ru.className='lang-btn ru'+(I18.lang==='ru'?' active':'');}
   if(en){en.className='lang-btn en'+(I18.lang==='en'?' active':'');}
@@ -1400,6 +1405,7 @@ function updateSettingsUI(){
   if(volEl){volEl.value=localStorage.getItem('snk_vol')||50;}
   applyI18();
 }
+function toggleGrowth(){growthBoost=!growthBoost;localStorage.setItem('snk_growth',growthBoost?1:0);updateSettingsUI();}
 function toggleSfx(){sfxEnabled=!sfxEnabled;localStorage.setItem('snk_sfx',sfxEnabled?1:0);updateSettingsUI();}
 function toggleMusic2(){toggleMusic();updateSettingsUI();}
 function toggleLang(){setLang(I18.lang==='ru'?'en':'ru');updateSettingsUI();}
@@ -1525,12 +1531,12 @@ function doRegister(){
   err.textContent='...';
   getUsers().then(function(users){
     if(users[u]){err.textContent='Никнейм занят';return;}
-    users[u]={password:simpleHash(p),coins:0,hs:0,skins:'["classic"]',equipped:'classic',upS:false,upSh:false,upD:false,upG:false};
+    users[u]={password:simpleHash(p),coins:0,hs:0,skins:'["classic"]',equipped:'classic',upS:false,upSh:false,upD:false};
     saveUsers(users);
     _d.user={name:u};
     localStorage.setItem('snk_user',JSON.stringify(_d.user));
     _d.coins=0;_d.hs=0;_d.skins=['classic'];_d.equipped='classic';
-    _d.upS=false;_d.upSh=false;_d.upD=false;_d.upG=false;
+    _d.upS=false;_d.upSh=false;_d.upD=false;
     localStorage.setItem('snk_c',0);localStorage.setItem('snk_hs',0);
     localStorage.setItem('snk_s','["classic"]');localStorage.setItem('snk_e','classic');
     closeLogin();
@@ -1557,8 +1563,7 @@ function doLogin(){
     _d.upS=users[u].upS||false;
     _d.upSh=users[u].upSh||false;
     _d.upD=users[u].upD||false;
-    _d.upG=users[u].upG||false;
-    localStorage.setItem('snk_c',_d.coins);
+localStorage.setItem('snk_c',_d.coins);
     localStorage.setItem('snk_hs',_d.hs);
     localStorage.setItem('snk_s',JSON.stringify(_d.skins));
     localStorage.setItem('snk_e',_d.equipped);
@@ -1595,7 +1600,6 @@ function saveUserData(){
     users[u].upS=_d.upS;
     users[u].upSh=_d.upSh;
     users[u].upD=_d.upD;
-    users[u].upG=_d.upG;
     localStorage.setItem('snk_users',JSON.stringify(users));
     saveUsers(users);
   }
