@@ -272,12 +272,16 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
   <div class="settings-content">
     <h2>⚙️ <span data-i18="settings">Настройки</span></h2>
     <div class="settings-row">
-      <span class="settings-label" data-i18="sounds">Звуки</span>
-      <button class="settings-toggle on" id="sfxToggle" onclick="toggleSfx()">ВКЛ</button>
+      <span class="settings-label" data-i18="music">Музыка</span>
+      <button class="settings-toggle on" id="musicToggle2" onclick="toggleMusic2()">ВКЛ</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">🔊 Громкость</span>
+      <input type="range" id="musicVol" min="0" max="100" value="50" style="width:120px" onchange="setMusicVol(this.value)">
     </div>
     <div class="settings-row">
       <span class="settings-label" data-i18="sfx">Эффекты</span>
-      <button class="settings-toggle on" id="musicToggle2" onclick="toggleMusic2()">ВКЛ</button>
+      <button class="settings-toggle on" id="sfxToggle" onclick="toggleSfx()">ВКЛ</button>
     </div>
     <div class="settings-row">
       <span class="settings-label" data-i18="language">Язык</span>
@@ -297,15 +301,22 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 <!-- LOGIN MODAL -->
 <div id="loginModal">
   <div class="login-content">
-    <h2>🐍 Вход</h2>
-    <input type="text" id="loginUsername" class="login-input" placeholder="Никнейм" maxlength="16">
-    <input type="password" id="loginPassword" class="login-input" placeholder="Пароль">
-    <div class="login-error" id="loginError"></div>
-    <button class="login-btn reg" id="btnLogin" onclick="doLogin()">🔐 Войти</button>
-    <button class="login-btn reg" onclick="doRegister()">📝 Регистрация</button>
-    <div class="login-or">— или —</div>
-    <button class="login-btn guest" onclick="playAsGuest()">👤 Играть как гость</button>
-    <div class="login-user" id="loginUserInfo"></div>
+    <h2 id="loginTitle">🐍 Вход</h2>
+    <div id="loginForm">
+      <input type="text" id="loginUsername" class="login-input" placeholder="Никнейм" maxlength="16">
+      <input type="password" id="loginPassword" class="login-input" placeholder="Пароль">
+      <div class="login-error" id="loginError"></div>
+      <button class="login-btn reg" id="btnLogin" onclick="doLogin()">🔐 Войти</button>
+      <button class="login-btn reg" onclick="doRegister()">📝 Регистрация</button>
+      <div class="login-or">— или —</div>
+      <button class="login-btn guest" onclick="playAsGuest()">👤 Играть как гость</button>
+    </div>
+    <div id="loginLoggedIn" style="display:none">
+      <p style="color:#ffd700;font-size:22px;margin:20px 0">👤 <span id="loggedInName"></span></p>
+      <p style="color:#888;margin-bottom:20px">Вы авторизованы</p>
+      <button class="login-btn green" onclick="playAsGuest()">▶️ Играть</button>
+      <button class="login-btn" onclick="logout();closeLogin();" style="background:#555;margin-top:10px">Выйти</button>
+    </div>
   </div>
 </div>
 
@@ -764,11 +775,17 @@ function updateSettingsUI(){
   if(en){en.className='lang-btn en'+(I18.lang==='en'?' active':'');}
   var hint=document.getElementById('controlsHint');
   if(hint)hint.textContent=I18.lang==='en'?'PC: WASD / Arrows | Phone: Swipes':'ПК: WASD / Стрелки | Телефон: Свайпы';
+  var volEl=document.getElementById('musicVol');
+  if(volEl){volEl.value=localStorage.getItem('snk_vol')||50;}
   applyI18();
 }
 function toggleSfx(){sfxEnabled=!sfxEnabled;localStorage.setItem('snk_sfx',sfxEnabled?1:0);updateSettingsUI();}
 function toggleMusic2(){toggleMusic();updateSettingsUI();}
 function toggleLang(){setLang(I18.lang==='ru'?'en':'ru');updateSettingsUI();}
+function setMusicVol(v){
+  if(masterGain)masterGain.gain.value=v/100;
+  localStorage.setItem('snk_vol',v);
+}
 
 // ===== AUTH SYSTEM =====
 function openLogin(){
@@ -778,6 +795,19 @@ function openLogin(){
   document.getElementById('loginPassword').value='';
   document.getElementById('loginError').textContent='';
   updateLoginUI();
+  var form=document.getElementById('loginForm');
+  var loggedIn=document.getElementById('loginLoggedIn');
+  var title=document.getElementById('loginTitle');
+  if(_d.user){
+    form.style.display='none';
+    loggedIn.style.display='block';
+    document.getElementById('loggedInName').textContent=_d.user.name;
+    if(title)title.textContent='👤 Профиль';
+  } else {
+    form.style.display='block';
+    loggedIn.style.display='none';
+    if(title)title.textContent='🐍 Вход';
+  }
 }
 function closeLogin(){document.getElementById('loginModal').style.display='none';}
 
