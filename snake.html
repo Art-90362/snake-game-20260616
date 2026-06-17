@@ -283,6 +283,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
       <button class="shop-tab active" onclick="switchTab('upgrades')">⬆️ Улучшения</button>
       <button class="shop-tab" onclick="switchTab('skins')">🎨 Скины</button>
       <button class="shop-tab" onclick="switchTab('fields')">🎮 Поля</button>
+      <button class="shop-tab" onclick="switchTab('refund')">💸 Возврат</button>
     </div>
     <div id="tabUpgrades">
       <div class="shop-item">
@@ -304,6 +305,10 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
     </div>
     <div id="tabSkins" style="display:none"><div class="skin-grid" id="skinGrid"></div></div>
     <div id="tabFields" style="display:none"><div class="skin-grid" id="fieldGrid"></div><div style="margin-top:15px;text-align:left"><h4 style="color:#ff9800;margin-bottom:10px">📷 Свой фон</h4><input type="text" id="customBgUrl" class="login-input" placeholder="URL картинки" style="font-size:13px;padding:10px"><button class="shop-item-btn" style="margin-top:8px" onclick="buyCustomBg()">Купить (5000🪙)</button><button class="shop-item-btn" style="margin-top:8px;background:#388e3c;display:none" id="btnSetBg" onclick="setCustomBg()">Установить</button><p style="color:#888;font-size:11px;margin-top:5px">Вставь URL изображения (jpg/png/gif)</p></div></div>
+    <div id="tabRefund" style="display:none">
+      <h3 style="color:#ff9800;margin-bottom:15px">💸 Вернуть покупку (50%)</h3>
+      <div class="skin-grid" id="refundList"></div>
+    </div>
     <button class="shop-close" onclick="closeShop()">Закрыть</button>
   </div>
 </div>
@@ -1173,13 +1178,16 @@ function switchTab(tab){
   document.getElementById('tabUpgrades').style.display=tab==='upgrades'?'block':'none';
   document.getElementById('tabSkins').style.display=tab==='skins'?'block':'none';
   document.getElementById('tabFields').style.display=tab==='fields'?'block':'none';
+  document.getElementById('tabRefund').style.display=tab==='refund'?'block':'none';
   document.querySelectorAll('.shop-tab').forEach(function(t){t.classList.remove('active')});
   var tabs=document.querySelectorAll('.shop-tab');
   if(tab==='upgrades'&&tabs[0])tabs[0].classList.add('active');
   else if(tab==='skins'&&tabs[1])tabs[1].classList.add('active');
   else if(tab==='fields'&&tabs[2])tabs[2].classList.add('active');
+  else if(tab==='refund'&&tabs[3])tabs[3].classList.add('active');
   if(tab==='fields')renderFieldGrid();
   else if(tab==='skins')renderSkinGrid();
+  else if(tab==='refund')renderRefundList();
 }
 function updateShopButtons(){
   var btnS=document.getElementById('btnSlow'),btnSh=document.getElementById('btnShield'),btnD=document.getElementById('btnDouble'),btnG=document.getElementById('btnGrowth');
@@ -1295,6 +1303,79 @@ function buyCustomBg(){
   }
   updateMenuStats();
   renderFieldGrid();
+  saveUserData();
+}
+
+// ===== REFUND =====
+function renderRefundList(){
+  var el=document.getElementById('refundList');
+  if(!el)return;
+  var html='';
+  // Skins (not classic)
+  for(var id in SKINS){
+    var s=SKINS[id];
+    if(id==='classic'||s.price===0)continue;
+    if(_d.skins.includes(id)){
+      var refund=Math.floor(s.price*0.5);
+      html+='<div class="skin-card owned" onclick="refundSkin(\''+id+'\')">'+
+        '<div style="width:40px;height:40px;background:'+s.color+';border-radius:50%;margin:0 auto 8px"></div>'+
+        '<h4>'+s.name+'</h4><p style="color:#ff9800">+'+(id===_d.equipped?'Экипировано!':refund+' 🪙')+'</p></div>';
+    }
+  }
+  // Fields (not classic_field)
+  for(var id in FIELDS){
+    var f=FIELDS[id];
+    if(id==='classic_field'||f.price===0)continue;
+    if(_ownedFields.includes(id)){
+      var refund=Math.floor(f.price*0.5);
+      html+='<div class="skin-card owned" onclick="refundField(\''+id+'\')">'+
+        '<div style="width:80px;height:50px;background:'+f.bg+';border-radius:5px;margin:0 auto 8px"></div>'+
+        '<h4>'+f.name+'</h4><p style="color:#ff9800">+'+(id===_equippedField?'Экипировано!':refund+' 🪙')+'</p></div>';
+    }
+  }
+  // Upgrades
+  if(_d.upS)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upS\',50)"><h4>⬆️ Замедление</h4><p style="color:#ff9800">+25 🪙</p></div>';
+  if(_d.upSh)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upSh\',100)"><h4>🛡️ Щит</h4><p style="color:#ff9800">+50 🪙</p></div>';
+  if(_d.upD)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upD\',150)"><h4>x2 Яблоко</h4><p style="color:#ff9800">+75 🪙</p></div>';
+  if(_d.upG)html+='<div class="skin-card owned" onclick="refundUpgrade(\'upG\',200)"><h4>📈 Рост+2</h4><p style="color:#ff9800">+100 🪙</p></div>';
+  if(!html)html='<p style="color:#888;text-align:center">Нет покупок для возврата</p>';
+  el.innerHTML=html;
+}
+
+function refundSkin(id){
+  if(id===_d.equipped)return; // can't refund equipped
+  var s=SKINS[id];
+  var refund=Math.floor(s.price*0.5);
+  _d.coins+=refund;
+  _d.skins=_d.skins.filter(function(x){return x!==id;});
+  localStorage.setItem('snk_c',_d.coins);
+  localStorage.setItem('snk_skins',JSON.stringify(_d.skins));
+  updateMenuStats();
+  renderRefundList();
+  saveUserData();
+}
+
+function refundField(id){
+  if(id===_equippedField)return; // can't refund equipped
+  var f=FIELDS[id];
+  var refund=Math.floor(f.price*0.5);
+  _d.coins+=refund;
+  _ownedFields=_ownedFields.filter(function(x){return x!==id;});
+  localStorage.setItem('snk_c',_d.coins);
+  localStorage.setItem('snk_fields',JSON.stringify(_ownedFields));
+  updateMenuStats();
+  renderRefundList();
+  saveUserData();
+}
+
+function refundUpgrade(id,price){
+  var refund=Math.floor(price*0.5);
+  _d.coins+=refund;
+  _d[id]=false;
+  localStorage.setItem('snk_c',_d.coins);
+  localStorage.setItem('snk_'+id,'false');
+  updateMenuStats();
+  renderRefundList();
   saveUserData();
 }
 
