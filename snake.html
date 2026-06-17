@@ -684,6 +684,7 @@ var enemySnake=[],enemyDx=1,enemyDy=0;
 var timeLeft=0,timerInterval=null;
 var enemyAlive=true;
 var scoreGoal=0;
+var enemyMoveCounter=0;
 var currentField='classic_field';
 var customBgImage=null;
 
@@ -947,7 +948,7 @@ function gameLoop(){
     if(!growthBoost)snake.pop();
   }
   // Enemy movement
-  if(gameMode==='enemy'&&enemyAlive)moveEnemy();
+  if(gameMode==='enemy'&&enemyAlive){enemyMoveCounter++;if(enemyMoveCounter>=2){moveEnemy();enemyMoveCounter=0;}}
   drawGame();
 }
 
@@ -956,19 +957,35 @@ function moveEnemy(){
   var eh=enemySnake[0];
   var px=snake[0].x,py=snake[0].y;
   var ex=eh.x,ey=eh.y;
-  // Predict player next position
-  var pnx=snake[0].x+dx, pny=snake[0].y+dy;
-  if(pnx<0)pnx=0;if(pnx>=tileCount)pnx=tileCount-1;
-  if(pny<0)pny=0;if(pny>=tileCount)pny=tileCount-1;
-  // Smart chase - try to get ahead of player
+  // Simple chase - follow player position, not prediction
   var tdx=0,tdy=0;
-  var pdiffX=pnx-ex,pdiffY=pny-ey;
-  if(Math.abs(pdiffX)>=Math.abs(pdiffY)){
-    if(pdiffX>0){tdx=1;tdy=0;}else if(pdiffX<0){tdx=-1;tdy=0;}
-    else {tdy=pdiffY>0?1:-1;}
+  var diffX=px-ex,diffY=py-ey;
+  // Only chase if close (2+ tiles), otherwise wander
+  if(Math.abs(diffX)+Math.abs(diffY)<3){
+    // Close enough - chase
+    if(Math.abs(diffX)>=Math.abs(diffY)){
+      if(diffX>0){tdx=1;tdy=0;}else if(diffX<0){tdx=-1;tdy=0;}
+      else {tdy=diffY>0?1:-1;}
+    } else {
+      if(diffY>0){tdy=1;tdx=0;}else if(diffY<0){tdy=-1;tdx=0;}
+      else {tdx=diffX>0?1:-1;}
+    }
   } else {
-    if(pdiffY>0){tdy=1;tdx=0;}else if(pdiffY<0){tdy=-1;tdx=0;}
-    else {tdx=pdiffX>0?1:-1;}
+    // Far away - random wander with bias toward player
+    if(Math.random()<0.6){
+      if(Math.abs(diffX)>=Math.abs(diffY)){
+        if(diffX>0){tdx=1;tdy=0;}else if(diffX<0){tdx=-1;tdy=0;}
+        else {tdy=diffY>0?1:-1;}
+      } else {
+        if(diffY>0){tdy=1;tdx=0;}else if(diffY<0){tdy=-1;tdx=0;}
+        else {tdx=diffX>0?1:-1;}
+      }
+    } else {
+      // Random direction
+      var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      var d=dirs[Math.floor(Math.random()*dirs.length)];
+      tdx=d[0];tdy=d[1];
+    }
   }
   // Check if move is safe
   var nhead={x:eh.x+tdx,y:eh.y+tdy};
@@ -980,13 +997,13 @@ function moveEnemy(){
     for(var a=0;a<alts.length;a++){
       var nh={x:eh.x+alts[a][0],y:eh.y+alts[a][1]};
       if(enemyCanMove(nh)){
-        var d=Math.abs(nh.x-pnx)+Math.abs(nh.y-pny);
+        var d=Math.abs(nh.x-px)+Math.abs(nh.y-py);
         if(d<bestDist){bestDist=d;best=nh;}
       }
     }
     if(best){nhead=best;tdx=best.x-eh.x;tdy=best.y-eh.y;}
   }
-  // Check wall collision for new direction
+  // Wall collision
   if(nhead.x<0||nhead.x>=tileCount||nhead.y<0||nhead.y>=tileCount){
     var dirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){return!(d[0]===-enemyDx&&d[1]===-enemyDy)});
     for(var i=0;i<dirs.length;i++){
@@ -1002,9 +1019,7 @@ function moveEnemy(){
 }
 
 function enemyCanMove(pos){
-  // Check wall
   if(pos.x<0||pos.x>=tileCount||pos.y<0||pos.y>=tileCount)return false;
-  // Check self collision
   for(var i=0;i<enemySnake.length;i++){
     if(enemySnake[i].x===pos.x&&enemySnake[i].y===pos.y)return false;
   }
@@ -1159,8 +1174,12 @@ function switchTab(tab){
   document.getElementById('tabSkins').style.display=tab==='skins'?'block':'none';
   document.getElementById('tabFields').style.display=tab==='fields'?'block':'none';
   document.querySelectorAll('.shop-tab').forEach(function(t){t.classList.remove('active')});
-  event.target.classList.add('active');
+  var tabs=document.querySelectorAll('.shop-tab');
+  if(tab==='upgrades'&&tabs[0])tabs[0].classList.add('active');
+  else if(tab==='skins'&&tabs[1])tabs[1].classList.add('active');
+  else if(tab==='fields'&&tabs[2])tabs[2].classList.add('active');
   if(tab==='fields')renderFieldGrid();
+  else if(tab==='skins')renderSkinGrid();
 }
 function updateShopButtons(){
   var btnS=document.getElementById('btnSlow'),btnSh=document.getElementById('btnShield'),btnD=document.getElementById('btnDouble'),btnG=document.getElementById('btnGrowth');
