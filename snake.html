@@ -303,7 +303,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
       </div>
     </div>
     <div id="tabSkins" style="display:none"><div class="skin-grid" id="skinGrid"></div></div>
-    <div id="tabFields" style="display:none"><div class="skin-grid" id="fieldGrid"></div><div style="margin-top:15px;text-align:left"><h4 style="color:#ff9800;margin-bottom:10px">📷 Свой фон</h4><input type="text" id="customBgUrl" class="login-input" placeholder="URL картинки для поля" style="font-size:13px;padding:10px"><button class="shop-item-btn" style="margin-top:8px" onclick="setCustomBg()">Установить (1000🪙)</button><p style="color:#888;font-size:11px;margin-top:5px">Вставь URL изображения (jpg/png/gif)</p></div></div>
+    <div id="tabFields" style="display:none"><div class="skin-grid" id="fieldGrid"></div><div style="margin-top:15px;text-align:left"><h4 style="color:#ff9800;margin-bottom:10px">📷 Свой фон</h4><input type="text" id="customBgUrl" class="login-input" placeholder="URL картинки" style="font-size:13px;padding:10px"><button class="shop-item-btn" style="margin-top:8px" onclick="buyCustomBg()">Купить (5000🪙)</button><button class="shop-item-btn" style="margin-top:8px;background:#388e3c;display:none" id="btnSetBg" onclick="setCustomBg()">Установить</button><p style="color:#888;font-size:11px;margin-top:5px">Вставь URL изображения (jpg/png/gif)</p></div></div>
     <button class="shop-close" onclick="closeShop()">Закрыть</button>
   </div>
 </div>
@@ -670,7 +670,7 @@ var FIELDS={
   sunset_field:{name:'Закат',bg:'#1a0f0f',grid:'rgba(255,87,34,0.06)',price:550},
   ice_field:{name:'Лёд',bg:'#0a1a2a',grid:'rgba(0,188,212,0.06)',price:600},
   fire_field:{name:'Огонь',bg:'#1a0505',grid:'rgba(255,152,0,0.07)',price:650},
-  custom_field:{name:'Свой фон',bg:'#0a0a0a',grid:'rgba(255,255,255,0.03)',price:1000,custom:true}
+  custom_field:{name:'Свой фон',bg:'#0a0a0a',grid:'rgba(255,255,255,0.03)',price:5000,custom:true}
 };
 
 // ===== GAME STATE =====
@@ -1237,6 +1237,13 @@ function renderFieldGrid(){
       '<div style="width:80px;height:50px;background:'+f.bg+';border-radius:5px;margin:0 auto 8px;box-shadow:inset 0 0 10px rgba(0,0,0,0.5)"></div>'+
       '<h4>'+f.name+'</h4><p>'+(equipped?'✓ Экипировано':owned?'Выбрать':f.price+' 🪙')+'</p></div>';
   }
+  // Custom field section
+  var cf=FIELDS.custom_field;
+  var cfOwned=_ownedFields.includes('custom_field');
+  var cfEquipped=_equippedField==='custom_field';
+  html+='<div class="skin-card'+(cfOwned?' owned':'')+(cfEquipped?' equipped':'')+'">'+
+    '<div style="width:80px;height:50px;background:linear-gradient(45deg,#333,#666);border-radius:5px;margin:0 auto 8px;box-shadow:inset 0 0 10px rgba(0,0,0,0.5)"></div>'+
+    '<h4>'+cf.name+'</h4><p>'+(cfEquipped?'✓ Экипировано':cfOwned?'Куплено':'5000 🪙')+'</p></div>';
   grid.innerHTML=html;
 }
 
@@ -1264,17 +1271,22 @@ function equipField(id){
 }
 
 function setCustomBg(){
-  if(_d.coins<1000)return;
   var url=document.getElementById('customBgUrl').value.trim();
   if(!url)return;
-  _d.coins-=1000;
-  localStorage.setItem('snk_c',_d.coins);
   localStorage.setItem('snk_custom_bg',url);
   customBgImage=new Image();
   customBgImage.src=url;
   _equippedField='custom_field';
   currentField='custom_field';
   localStorage.setItem('snk_field','custom_field');
+  renderFieldGrid();
+  saveUserData();
+}
+
+function buyCustomBg(){
+  if(_d.coins<5000)return;
+  _d.coins-=5000;
+  localStorage.setItem('snk_c',_d.coins);
   if(!_ownedFields.includes('custom_field')){
     _ownedFields.push('custom_field');
     localStorage.setItem('snk_fields',JSON.stringify(_ownedFields));
