@@ -337,6 +337,38 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 <audio id="bgMusic" loop preload="auto" crossorigin="anonymous"><source src="snake_theme.mp3" type="audio/mpeg"></audio>
 
 <script>
+// ===== SERVER SYNC (JSONBin.io) =====
+var BIN_ID='snake_users_v1';
+var BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+var binMasterKey='$2a$10$YOUR_MASTER_KEY_HERE';
+
+function apiGet(path){
+  return fetch(BIN_URL+path,{
+    headers:{'X-Access-Key':binMasterKey}
+  }).then(function(r){return r.json()});
+}
+function apiPut(path,data){
+  return fetch(BIN_URL+path,{
+    method:'PUT',
+    headers:{'X-Access-Key':binMasterKey,'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  }).then(function(r){return r.json()});
+}
+
+var _serverUsers=null;
+function getUsers(){
+  return apiGet('').then(function(r){
+    _serverUsers=r.record||{};
+    return _serverUsers;
+  }).catch(function(){
+    return JSON.parse(localStorage.getItem('snk_users')||'{}');
+  });
+}
+function saveUsers(users){
+  _serverUsers=users;
+  localStorage.setItem('snk_users',JSON.stringify(users));
+  apiPut('',users).catch(function(){});
+}
 // ===== WEB AUDIO (BASS BOOST) =====
 var audioCtx=null;
 var bassGain=null;
@@ -835,43 +867,51 @@ function doRegister(){
   var err=document.getElementById('loginError');
   if(u.length<3){err.textContent='Никнейм мин. 3 символа';return;}
   if(p.length<4){err.textContent='Пароль мин. 4 символа';return;}
-  var users=JSON.parse(localStorage.getItem('snk_users')||'{}');
-  if(users[u]){err.textContent='Никнейм занят';return;}
-  users[u]={password:simpleHash(p),coins:0,hs:0,skins:'["classic"]',equipped:'classic',upS:false,upSh:false,upD:false,upG:false};
-  localStorage.setItem('snk_users',JSON.stringify(users));
-  _d.user={name:u};
-  localStorage.setItem('snk_user',JSON.stringify(_d.user));
-  closeLogin();
-  updateLoginUI();
-  playGame();
+  err.textContent='...';
+  getUsers().then(function(users){
+    if(users[u]){err.textContent='Никнейм занят';return;}
+    users[u]={password:simpleHash(p),coins:0,hs:0,skins:'["classic"]',equipped:'classic',upS:false,upSh:false,upD:false,upG:false};
+    saveUsers(users);
+    _d.user={name:u};
+    localStorage.setItem('snk_user',JSON.stringify(_d.user));
+    _d.coins=0;_d.hs=0;_d.skins=['classic'];_d.equipped='classic';
+    _d.upS=false;_d.upSh=false;_d.upD=false;_d.upG=false;
+    localStorage.setItem('snk_c',0);localStorage.setItem('snk_hs',0);
+    localStorage.setItem('snk_s','["classic"]');localStorage.setItem('snk_e','classic');
+    closeLogin();
+    updateLoginUI();
+    updateMenuStats();
+    playGame();
+  });
 }
 
 function doLogin(){
   var u=document.getElementById('loginUsername').value.trim();
   var p=document.getElementById('loginPassword').value;
   var err=document.getElementById('loginError');
-  var users=JSON.parse(localStorage.getItem('snk_users')||'{}');
-  if(!users[u]){err.textContent='Пользователь не найден';return;}
-  if(users[u].password!==simpleHash(p)){err.textContent='Неверный пароль';return;}
-  _d.user={name:u};
-  localStorage.setItem('snk_user',JSON.stringify(_d.user));
-  // Load user data
-  _d.coins=users[u].coins||0;
-  _d.hs=users[u].hs||0;
-  _d.skins=JSON.parse(users[u].skins||'["classic"]');
-  _d.equipped=users[u].equipped||'classic';
-  _d.upS=users[u].upS||false;
-  _d.upSh=users[u].upSh||false;
-  _d.upD=users[u].upD||false;
-  _d.upG=users[u].upG||false;
-  localStorage.setItem('snk_c',_d.coins);
-  localStorage.setItem('snk_hs',_d.hs);
-  localStorage.setItem('snk_s',JSON.stringify(_d.skins));
-  localStorage.setItem('snk_e',_d.equipped);
-  closeLogin();
-  updateLoginUI();
-  updateMenuStats();
-  playGame();
+  err.textContent='...';
+  getUsers().then(function(users){
+    if(!users[u]){err.textContent='Пользователь не найден';return;}
+    if(users[u].password!==simpleHash(p)){err.textContent='Неверный пароль';return;}
+    _d.user={name:u};
+    localStorage.setItem('snk_user',JSON.stringify(_d.user));
+    _d.coins=users[u].coins||0;
+    _d.hs=users[u].hs||0;
+    _d.skins=JSON.parse(users[u].skins||'["classic"]');
+    _d.equipped=users[u].equipped||'classic';
+    _d.upS=users[u].upS||false;
+    _d.upSh=users[u].upSh||false;
+    _d.upD=users[u].upD||false;
+    _d.upG=users[u].upG||false;
+    localStorage.setItem('snk_c',_d.coins);
+    localStorage.setItem('snk_hs',_d.hs);
+    localStorage.setItem('snk_s',JSON.stringify(_d.skins));
+    localStorage.setItem('snk_e',_d.equipped);
+    closeLogin();
+    updateLoginUI();
+    updateMenuStats();
+    playGame();
+  });
 }
 
 function playAsGuest(){
@@ -902,6 +942,7 @@ function saveUserData(){
     users[u].upD=_d.upD;
     users[u].upG=_d.upG;
     localStorage.setItem('snk_users',JSON.stringify(users));
+    saveUsers(users);
   }
 }
 
