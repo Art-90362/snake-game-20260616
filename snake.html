@@ -639,24 +639,24 @@ sfxEnabled=localStorage.getItem('snk_sfx')!=='0';
 
 var SKINS={
   classic:{name:'Классик',color:'#00ff00',price:0},
-  blue:{name:'Синяя',color:'#2196F3',price:50},
-  red:{name:'Красная',color:'#f44336',price:80},
-  purple:{name:'Фиолет.',color:'#9c27b0',price:100},
-  fire:{name:'Огненная',color:'#ff5722',price:120},
-  ice:{name:'Ледяная',color:'#00bcd4',price:120},
-  gold:{name:'Золотая',color:'#ffd700',price:200},
-  rainbow:{name:'Радужная',color:'rainbow',price:300},
-  neon:{name:'Неон',color:'#00ff88',price:150},
-  dark:{name:'Тёмная',color:'#424242',price:80},
-  coral:{name:'Коралл',color:'#FF7F7F',price:100},
-  teal:{name:'Бирюза',color:'#008080',price:120},
-  lime:{name:'Лайм',color:'#ADFF2F',price:90},
-  pink:{name:'Розовая',color:'#FF69B4',price:110},
-  violet:{name:'Виолет',color:'#8B00FF',price:140},
-  brown:{name:'Коричн.',color:'#8B4513',price:80},
-  gray:{name:'Серый',color:'#808080',price:60},
-  orange:{name:'Оранж.',color:'#FFA500',price:70},
-  aqua:{name:'Аква',color:'#00FFFF',price:130}
+  blue:{name:'Синяя',color:'#2196F3',price:100},
+  red:{name:'Красная',color:'#f44336',price:160},
+  purple:{name:'Фиолет.',color:'#9c27b0',price:200},
+  fire:{name:'Огненная',color:'#ff5722',price:240},
+  ice:{name:'Ледяная',color:'#00bcd4',price:240},
+  gold:{name:'Золотая',color:'#ffd700',price:400},
+  rainbow:{name:'Радужная',color:'rainbow',price:600},
+  neon:{name:'Неон',color:'#00ff88',price:300},
+  dark:{name:'Тёмная',color:'#424242',price:160},
+  coral:{name:'Коралл',color:'#FF7F7F',price:200},
+  teal:{name:'Бирюза',color:'#008080',price:240},
+  lime:{name:'Лайм',color:'#ADFF2F',price:180},
+  pink:{name:'Розовая',color:'#FF69B4',price:220},
+  violet:{name:'Виолет',color:'#8B00FF',price:280},
+  brown:{name:'Коричн.',color:'#8B4513',price:160},
+  gray:{name:'Серый',color:'#808080',price:120},
+  orange:{name:'Оранж.',color:'#FFA500',price:140},
+  aqua:{name:'Аква',color:'#00FFFF',price:260}
 };
 
 var FIELDS={
@@ -919,22 +919,21 @@ function gameLoop(){
   if(head.x<0||head.x>=tileCount||head.y<0||head.y>=tileCount){handleDeath();return;}
   // Self collision
   for(var i=0;i<snake.length;i++){if(head.x===snake[i].x&&head.y===snake[i].y){handleDeath();return;}}
-  // Enemy collision (enemy head hits our head)
-  if(gameMode==='enemy'&&enemyAlive&&enemySnake.length>0&&head.x===enemySnake[0].x&&head.y===enemySnake[0].y){handleDeath();return;}
-  snake.unshift(head);
-  // Enemy mode - we hit enemy body
-  if(gameMode==='enemy'&&enemyAlive){
+  // Enemy collision
+  if(gameMode==='enemy'&&enemyAlive&&enemySnake.length>0){
+    // Player head vs enemy head
+    if(head.x===enemySnake[0].x&&head.y===enemySnake[0].y){handleDeath();return;}
+    // Player head vs enemy body -> enemy dies, player +10
     for(var i=1;i<enemySnake.length;i++){
       if(head.x===enemySnake[i].x&&head.y===enemySnake[i].y){
-        score+=10;
+        score+=10;scoreGoal++;
         playSfx('buy');
-        enemyAlive=false;
-        enemySnake=[];
-        scoreGoal++;
+        enemyAlive=false;enemySnake=[];
         break;
       }
     }
   }
+  snake.unshift(head);
   if(head.x===food.x&&head.y===food.y){
     score+=doubleFood?2:1;
     document.getElementById('scoreDisplay').textContent=score;
@@ -947,8 +946,8 @@ function gameLoop(){
   } else {
     if(!growthBoost)snake.pop();
   }
-  // Enemy movement
-  if(gameMode==='enemy'&&enemyAlive){enemyMoveCounter++;if(enemyMoveCounter>=2){moveEnemy();enemyMoveCounter=0;}}
+  // Enemy movement & eating
+  if(gameMode==='enemy'&&enemyAlive){enemyMoveCounter++;if(enemyMoveCounter>=2){moveEnemy();checkEnemyFood();enemyMoveCounter=0;}}
   drawGame();
 }
 
@@ -957,53 +956,35 @@ function moveEnemy(){
   var eh=enemySnake[0];
   var px=snake[0].x,py=snake[0].y;
   var ex=eh.x,ey=eh.y;
-  // Simple chase - follow player position, not prediction
+  var fx=food.x,fy=food.y;
   var tdx=0,tdy=0;
-  var diffX=px-ex,diffY=py-ey;
-  // Only chase if close (2+ tiles), otherwise wander
-  if(Math.abs(diffX)+Math.abs(diffY)<3){
-    // Close enough - chase
-    if(Math.abs(diffX)>=Math.abs(diffY)){
-      if(diffX>0){tdx=1;tdy=0;}else if(diffX<0){tdx=-1;tdy=0;}
-      else {tdy=diffY>0?1:-1;}
-    } else {
-      if(diffY>0){tdy=1;tdx=0;}else if(diffY<0){tdy=-1;tdx=0;}
-      else {tdx=diffX>0?1:-1;}
-    }
+  // Chase whichever is closer: player head or food
+  var distToPlayer=Math.abs(px-ex)+Math.abs(py-ey);
+  var distToFood=Math.abs(fx-ex)+Math.abs(fy-ey);
+  var targetX=distToPlayer<distToFood?px:fx;
+  var targetY=distToPlayer<distToFood?py:fy;
+  var diffX=targetX-ex,diffY=targetY-ey;
+  if(Math.abs(diffX)>=Math.abs(diffY)){
+    if(diffX>0){tdx=1;tdy=0;}else if(diffX<0){tdx=-1;tdy=0;}
+    else {tdy=diffY>0?1:-1;}
   } else {
-    // Far away - random wander with bias toward player
-    if(Math.random()<0.6){
-      if(Math.abs(diffX)>=Math.abs(diffY)){
-        if(diffX>0){tdx=1;tdy=0;}else if(diffX<0){tdx=-1;tdy=0;}
-        else {tdy=diffY>0?1:-1;}
-      } else {
-        if(diffY>0){tdy=1;tdx=0;}else if(diffY<0){tdy=-1;tdx=0;}
-        else {tdx=diffX>0?1:-1;}
-      }
-    } else {
-      // Random direction
-      var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-      var d=dirs[Math.floor(Math.random()*dirs.length)];
-      tdx=d[0];tdy=d[1];
-    }
+    if(diffY>0){tdy=1;tdx=0;}else if(diffY<0){tdy=-1;tdx=0;}
+    else {tdx=diffX>0?1:-1;}
   }
-  // Check if move is safe
   var nhead={x:eh.x+tdx,y:eh.y+tdy};
   var safe=enemyCanMove(nhead);
   if(!safe){
-    // Try alternate paths
     var alts=[[1,0],[-1,0],[0,1],[0,-1]];
     var best=null,bestDist=999;
     for(var a=0;a<alts.length;a++){
       var nh={x:eh.x+alts[a][0],y:eh.y+alts[a][1]};
       if(enemyCanMove(nh)){
-        var d=Math.abs(nh.x-px)+Math.abs(nh.y-py);
+        var d=Math.abs(nh.x-targetX)+Math.abs(nh.y-targetY);
         if(d<bestDist){bestDist=d;best=nh;}
       }
     }
     if(best){nhead=best;tdx=best.x-eh.x;tdy=best.y-eh.y;}
   }
-  // Wall collision
   if(nhead.x<0||nhead.x>=tileCount||nhead.y<0||nhead.y>=tileCount){
     var dirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){return!(d[0]===-enemyDx&&d[1]===-enemyDy)});
     for(var i=0;i<dirs.length;i++){
@@ -1016,6 +997,23 @@ function moveEnemy(){
   enemyDx=tdx;enemyDy=tdy;
   enemySnake.unshift(nhead);
   enemySnake.pop();
+  // Check if enemy hit player body (not head) -> enemy dies
+  for(var i=1;i<snake.length;i++){
+    if(enemySnake[0].x===snake[i].x&&enemySnake[0].y===snake[i].y){
+      enemyAlive=false;enemySnake=[];scoreGoal++;
+      playSfx('buy');
+      break;
+    }
+  }
+}
+
+function checkEnemyFood(){
+  if(!enemyAlive||enemySnake.length===0)return;
+  var eh=enemySnake[0];
+  if(eh.x===food.x&&eh.y===food.y){
+    enemySnake.push({});
+    placeFood();
+  }
 }
 
 function enemyCanMove(pos){
