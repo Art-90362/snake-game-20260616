@@ -441,7 +441,7 @@ canvas{border-radius:10px;border:3px solid #333;box-shadow:0 0 30px rgba(0,255,0
 <button id="musicToggleBtn" onclick="toggleMusic()">🔊</button>
 
 <!-- AUDIO with Web Audio API (bass boost) -->
-<audio id="bgMusic" loop preload="auto" crossorigin="anonymous"><source src="snake_theme.mp3" type="audio/mpeg"></audio>
+<audio id="bgMusic" loop preload="auto" crossorigin="anonymous"><source src="snake_space.mp3" type="audio/mpeg"></audio>
 
 <script>
 // ===== SERVER SYNC (JSONBin.io) =====
@@ -869,7 +869,7 @@ function startActualGame(){
   if(gameInterval)clearInterval(gameInterval);
   gameInterval=setInterval(gameLoop,currentSpeed);
   if(_d.music){
-    bgMusic.src=gameMode==='enemy'?'snake_intense.mp3':gameMode==='time'?'snake_time.mp3':'snake_theme.mp3';
+    bgMusic.src=gameMode==='enemy'?'snake_enemy.mp3':gameMode==='time'?'snake_calm.mp3':'snake_space.mp3';
     bgMusic.loop=true;
     bgMusic.load();
     bgMusic.play().then(function(){}).catch(function(e){console.log('Play error:',e.message)});
@@ -1123,8 +1123,9 @@ function updateSpeed(){
 
 function checkMusicSwitch(){
   if(_playlist.length>0)return; // playlist overrides game music
+  if(gameMode!=='classic')return; // only switch in classic mode
   var spd=baseSpeed-currentSpeed;
-  var newTrack=spd>80?'intense':spd>40?'theme':'calm';
+  var newTrack=spd>80?'enemy':spd>40?'space':'calm';
   if(newTrack!==currentTrack){
     currentTrack=newTrack;
     if(_d.music){
