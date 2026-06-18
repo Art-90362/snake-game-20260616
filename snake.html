@@ -7,13 +7,28 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
-.loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;transition:opacity .5s}
-.loading-screen.hidden{opacity:0;pointer-events:none}
-.loading-title{font-size:42px;margin-bottom:30px;animation:pulse 1.5s infinite}
-.loading-bar-container{width:300px;height:20px;background:#333;border-radius:10px;overflow:hidden}
-.loading-bar{height:100%;width:0%;background:linear-gradient(90deg,#00ff00,#00ff88);border-radius:10px;transition:width .3s}
-.loading-text{margin-top:15px;color:#888;font-size:14px}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999}
+.loading-screen.hidden{opacity:0;pointer-events:none;transition:opacity .5s}
+.loading-screen.error{background:linear-gradient(135deg,#2e1a1a,#3e1621)}
+.loading-title{font-size:48px;margin-bottom:20px;animation:titlePulse 2s ease-in-out infinite;text-shadow:0 0 30px rgba(0,255,0,.8)}
+@keyframes titlePulse{0%,100%{transform:scale(1);text-shadow:0 0 30px rgba(0,255,0,.5)}50%{transform:scale(1.08);text-shadow:0 0 50px rgba(0,255,0,1)}}
+.snake-loader{width:120px;height:40px;margin-bottom:25px;position:relative}
+.snake-segment{position:absolute;width:30px;height:30px;background:#00ff00;border-radius:6px;box-shadow:0 0 15px #00ff00;animation:snakeMove 1.5s ease-in-out infinite}
+.snake-segment:nth-child(1){animation-delay:0s}
+.snake-segment:nth-child(2){animation-delay:0.1s;left:35px}
+.snake-segment:nth-child(3){animation-delay:0.2s;left:70px}
+@keyframes snakeMove{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-15px);opacity:1}}
+.loading-bar-container{width:320px;height:24px;background:#222;border-radius:12px;overflow:hidden;border:2px solid #333;margin-bottom:15px}
+.loading-bar{height:100%;width:0%;background:linear-gradient(90deg,#00ff00,#00ff88,#00ff00);background-size:200% 100%;border-radius:10px;transition:width .2s;animation:gradientMove 1.5s linear infinite}
+@keyframes gradientMove{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.loading-text{margin-top:10px;color:#aaa;font-size:16px;font-weight:bold}
+.loading-dots{animation:blink 1s infinite}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.error-screen{display:none;flex-direction:column;align-items:center;text-align:center}
+.error-screen h2{color:#f44336;font-size:32px;margin-bottom:15px}
+.error-screen p{color:#ccc;margin-bottom:20px;max-width:300px}
+.retry-btn{background:linear-gradient(135deg,#ff9800,#ff5722);color:#fff;border:none;padding:15px 35px;border-radius:25px;cursor:pointer;font-size:18px;font-weight:bold;box-shadow:0 6px 20px rgba(255,152,0,.4);transition:all .2s}
+.retry-btn:hover{transform:scale(1.05);box-shadow:0 8px 25px rgba(255,152,0,.6)}
 .coins-display{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);padding:8px 20px;border-radius:20px;font-size:18px;color:#ffd700;z-index:100;border:2px solid #ffd700}
 .coins-display span{font-weight:bold}
 canvas{border:3px solid #333;border-radius:10px;background:#0a0a0a;box-shadow:0 0 30px rgba(0,255,0,.2),inset 0 0 50px rgba(0,0,0,.5)}
@@ -74,8 +89,18 @@ canvas{border:3px solid #333;border-radius:10px;background:#0a0a0a;box-shadow:0 
 <body>
 <div id="loadingScreen" class="loading-screen">
 <div class="loading-title">🐍 Змейка</div>
+<div class="snake-loader">
+<div class="snake-segment"></div>
+<div class="snake-segment"></div>
+<div class="snake-segment"></div>
+</div>
 <div class="loading-bar-container"><div id="loadingBar" class="loading-bar"></div></div>
-<div class="loading-text">Загрузка<span id="loadingDots"></span></div>
+<div class="loading-text" id="loadingText">Загрузка<span class="loading-dots">...</span></div>
+<div id="errorScreen" class="error-screen">
+<h2>⚠️ Ошибка загрузки</h2>
+<p id="errorMsg">Не удалось загрузить игру. Проверьте интернет-соединение.</p>
+<button class="retry-btn" onclick="location.reload()">🔄 Повторить</button>
+</div>
 </div>
 <div class="highscore-display">🏆 Рекорд: <span id="highScore">0</span></div>
 <div class="coins-display">🪙 <span id="totalCoins">0</span></div>
@@ -184,7 +209,7 @@ function antiCheat(){var stored=parseInt(localStorage.getItem('snk_cs')||'0');re
 function showAntiCheat(msg){document.getElementById('anticheatMsg').textContent=msg;document.getElementById('anticheatWarning').style.display='block';setTimeout(function(){document.getElementById('anticheatWarning').style.display='none'},3000)}
 function toggleMusic(){_d.music=!_d.music;localStorage.setItem('snk_m',_d.music?'1':'0');if(_d.music){bgMusic.play().catch(function(){});musicToggle.textContent='🔊'}else{bgMusic.pause();musicToggle.textContent='🔇'}}
 function initMusic(){bgMusic.volume=0.3;if(_d.music){bgMusic.play().catch(function(){});musicToggle.textContent='🔊'}else{musicToggle.textContent='🔇'}}
-function showLoading(){var bar=document.getElementById('loadingBar');var dots=document.getElementById('loadingDots');var pr=0;var iv=setInterval(function(){pr+=Math.random()*15;if(pr>=100){pr=100;clearInterval(iv);setTimeout(function(){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()},300)}bar.style.width=pr+'%'},200)}
+function showLoading(){var bar=document.getElementById('loadingBar');var text=document.getElementById('loadingText');var err=document.getElementById('errorScreen');var pr=0;var attempts=0;var iv=setInterval(function(){pr+=Math.random()*12+3;if(pr>=100){pr=100;bar.style.width='100%';clearInterval(iv);setTimeout(function(){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('startScreen').style.display='flex';initMusic()},400)}else{bar.style.width=pr+'%';var dots='.'.repeat((attempts%3)+1);text.innerHTML='Загрузка'+dots+'<span class="loading-dots"></span>';attempts++}},150);setTimeout(function(){if(pr<30){clearInterval(iv);document.getElementById('loadingScreen').classList.add('error');text.style.display='none';document.querySelector('.loading-bar-container').style.display='none';err.style.display='flex';document.getElementById('errorMsg').textContent='Медленное соединение или файлы не загрузились. Нажмите "Повторить".'}},15000)}
 function init(){_d.checksum=calcChecksum();localStorage.setItem('snk_cs',_d.checksum);totalCoinsElement.textContent=_d.coins;highScoreElement.textContent=_d.hs;renderSkinGrid();drawGame();showLoading()}
 function openShop(){document.getElementById('shopCoins').textContent=_d.coins;updateShopButtons();renderSkinGrid();document.getElementById('shopModal').style.display='flex'}
 function closeShop(){document.getElementById('shopModal').style.display='none'}
